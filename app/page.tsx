@@ -1,5 +1,5 @@
 import Link from "next/link";
-import IntroBox from "@/components/IntroBox";
+import HomeStage from "@/components/HomeStage";
 import PosterScene from "@/components/PosterScene";
 import type { GraduatePick } from "@/components/LetterCube";
 import { getGraduates, getSettings } from "@/lib/data";
@@ -21,7 +21,7 @@ export default async function Home() {
 
   return (
     <main className="flex-1">
-      <IntroBox />
+      <HomeStage>
       <PosterScene settings={settings} picks={picks} />
 
       {/* main navigation */}
@@ -39,6 +39,7 @@ export default async function Home() {
           סגל אקדמי · <span lang="ar">الطاقم الأكاديمي</span> · Academic Faculty
         </Link>
       </nav>
+      </HomeStage>
     </main>
   );
 }

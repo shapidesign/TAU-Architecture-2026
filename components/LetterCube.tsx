@@ -58,7 +58,10 @@ export default function LetterCube({
   const glyph = ch === "↑" ? <ArrowGlyph /> : <span className="glyph">{ch}</span>;
 
   return (
-    <div className={`scene3d ${className}`}>
+    <div
+      className={`scene3d cube-pop ${className}`}
+      style={{ "--pop-delay": `${(seed % 10) * 0.09}s` } as React.CSSProperties}
+    >
       <button
         type="button"
         aria-label={

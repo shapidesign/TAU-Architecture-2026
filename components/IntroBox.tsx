@@ -86,8 +86,10 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
 
   // ---- stage 2: the box sides unfold outward and become the background ----
   if (phase === "unfold") {
+    // slightly darker than the page bg so the unfolding sides stay readable,
+    // brightening as they fold away — light flooding into the box
     const flap =
-      "absolute bg-[var(--bg)] border-[3px] border-[color-mix(in_srgb,var(--bg),black_14%)] shadow-[0_0_50px_rgba(0,0,0,0.25)]";
+      "absolute bg-[color-mix(in_srgb,var(--bg),black_9%)] border-[3px] border-[color-mix(in_srgb,var(--bg),black_22%)] shadow-[0_0_50px_rgba(0,0,0,0.3)]";
     const spring = { type: "spring" as const, stiffness: 55, damping: 16 };
     return (
       <div
@@ -98,25 +100,25 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
         <motion.div
           className={`${flap} inset-y-0 left-0 w-1/2 origin-left`}
           initial={{ rotateY: 0, filter: "brightness(1)" }}
-          animate={{ rotateY: -118, filter: "brightness(0.85)" }}
+          animate={{ rotateY: -118, filter: "brightness(1.18)" }}
           transition={{ ...spring, delay: 0 }}
         />
         <motion.div
           className={`${flap} inset-y-0 right-0 w-1/2 origin-right`}
           initial={{ rotateY: 0, filter: "brightness(1)" }}
-          animate={{ rotateY: 118, filter: "brightness(0.85)" }}
+          animate={{ rotateY: 118, filter: "brightness(1.18)" }}
           transition={{ ...spring, delay: 0.16 }}
         />
         <motion.div
           className={`${flap} inset-x-0 top-0 h-1/2 origin-top`}
           initial={{ rotateX: 0, filter: "brightness(1)" }}
-          animate={{ rotateX: 118, filter: "brightness(0.85)" }}
+          animate={{ rotateX: 118, filter: "brightness(1.18)" }}
           transition={{ ...spring, delay: 0.32 }}
         />
         <motion.div
           className={`${flap} inset-x-0 bottom-0 h-1/2 origin-bottom`}
           initial={{ rotateX: 0, filter: "brightness(1)" }}
-          animate={{ rotateX: -118, filter: "brightness(0.85)" }}
+          animate={{ rotateX: -118, filter: "brightness(1.18)" }}
           transition={{ ...spring, delay: 0.48 }}
           onAnimationComplete={finish}
         />
@@ -199,19 +201,40 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
                   delay: 1.15,
                 }}
               />
-              {/* masking tape over the seam — peels along it */}
-              <motion.div
-                className="absolute inset-y-[-10%] left-[36%] w-[28%] bg-[#f3eedf]/95"
-                style={{
-                  y: tapeY,
-                  rotate: tapeRot,
-                  skewY: tapeSkew,
-                  opacity: tapeOpacity,
-                  boxShadow: tapeShadow,
-                  clipPath:
-                    "polygon(0 3%, 25% 0, 50% 3%, 75% 0, 100% 3%, 100% 97%, 75% 100%, 50% 97%, 25% 100%, 0 97%)",
-                }}
-              />
+              {/* masking tape over the seam: stuck strip + rolling peel front */}
+              <div className="absolute inset-y-[-6%] left-[36%] w-[28%] pointer-events-none">
+                {/* remaining stuck tape, torn edge at the peel front */}
+                <motion.div
+                  className="absolute inset-x-0 top-0 bg-[#f3eedf]/95"
+                  style={{
+                    height: remH,
+                    clipPath:
+                      "polygon(0 2%, 25% 0, 50% 2%, 75% 0, 100% 2%, 100% 98%, 78% 100%, 55% 97.5%, 30% 100%, 0 97.5%)",
+                  }}
+                />
+                {/* the roll — grows as it swallows tape, surface spins */}
+                <motion.div
+                  className="absolute inset-x-[-18%] rounded-full overflow-hidden"
+                  style={{
+                    top: rollTop,
+                    height: rollH,
+                    rotate: rollWobble,
+                    opacity: tapeOpacity,
+                    boxShadow: rollShadow,
+                    background:
+                      "linear-gradient(to bottom, #fcf8ec 0%, #f3eedf 40%, #cfc8b0 82%, #e8e2cf 100%)",
+                  }}
+                >
+                  <motion.div
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage:
+                        "repeating-linear-gradient(to top, rgba(0,0,0,0.06) 0 2px, transparent 2px 6px)",
+                      backgroundPositionY: rollSpin,
+                    }}
+                  />
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </motion.div>

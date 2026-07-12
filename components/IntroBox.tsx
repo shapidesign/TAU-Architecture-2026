@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 
-type Phase = "tape" | "turning" | "diving" | "unfold" | "hidden";
+type Phase = "tape" | "turning" | "diving" | "hidden";
 
 // module state: survives client-side navigation, resets on full page load —
 // so the intro plays once per refresh, not on every return to the homepage
@@ -12,9 +12,8 @@ let playedThisPageLoad = false;
 /**
  * Intro: a sealed cardboard box. Drag peels the masking tape (progress
  * accumulates — the tape stays where you leave it). Fully peeled, the box
- * turns its opening toward the viewer, the flaps swing open, the camera
- * flies through the mouth into grey, and the sides of the box unfold
- * outward to become the page background. Then the letter cubes appear.
+ * turns its opening toward the viewer, the flaps swing open, and the camera
+ * flies through the mouth into the grey page. Then the letter cubes appear.
  */
 export default function IntroBox({ onDone }: { onDone?: () => void }) {
   const [phase, setPhase] = useState<Phase>(() =>
@@ -79,54 +78,11 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
     animate(peel, 1.5, { duration: 0.4, ease: "easeIn" }); // tape rips off
     setPhase("turning"); // box rotates, mouth to camera, flaps swing open
     setTimeout(() => setPhase("diving"), 1900); // fly through the mouth
-    setTimeout(() => setPhase("unfold"), 2950); // sides unfold into the bg
   }
 
   if (phase === "hidden") return null;
 
-  // ---- stage 2: the box sides unfold outward and become the background ----
-  if (phase === "unfold") {
-    // slightly darker than the page bg so the unfolding sides stay readable,
-    // brightening as they fold away — light flooding into the box
-    const flap =
-      "absolute bg-[color-mix(in_srgb,var(--bg),black_9%)] border-[3px] border-[color-mix(in_srgb,var(--bg),black_22%)] shadow-[0_0_50px_rgba(0,0,0,0.3)]";
-    const spring = { type: "spring" as const, stiffness: 55, damping: 16 };
-    return (
-      <div
-        className="fixed inset-0 z-50 pointer-events-none"
-        style={{ perspective: "1300px" }}
-      >
-        {/* long sides (left/right) first, then top/bottom — like a real box */}
-        <motion.div
-          className={`${flap} inset-y-0 left-0 w-1/2 origin-left`}
-          initial={{ rotateY: 0, filter: "brightness(1)" }}
-          animate={{ rotateY: -118, filter: "brightness(1.18)" }}
-          transition={{ ...spring, delay: 0 }}
-        />
-        <motion.div
-          className={`${flap} inset-y-0 right-0 w-1/2 origin-right`}
-          initial={{ rotateY: 0, filter: "brightness(1)" }}
-          animate={{ rotateY: 118, filter: "brightness(1.18)" }}
-          transition={{ ...spring, delay: 0.16 }}
-        />
-        <motion.div
-          className={`${flap} inset-x-0 top-0 h-1/2 origin-top`}
-          initial={{ rotateX: 0, filter: "brightness(1)" }}
-          animate={{ rotateX: 118, filter: "brightness(1.18)" }}
-          transition={{ ...spring, delay: 0.32 }}
-        />
-        <motion.div
-          className={`${flap} inset-x-0 bottom-0 h-1/2 origin-bottom`}
-          initial={{ rotateX: 0, filter: "brightness(1)" }}
-          animate={{ rotateX: -118, filter: "brightness(1.18)" }}
-          transition={{ ...spring, delay: 0.48 }}
-          onAnimationComplete={finish}
-        />
-      </div>
-    );
-  }
-
-  // ---- stage 1: sealed box → peel → turn to face viewer → dive ----
+  // ---- sealed box → peel → turn to face viewer → dive through the mouth ----
   return (
     <motion.div
       className="fixed inset-0 z-50 bg-[var(--bg)] touch-none select-none flex flex-col items-center justify-center gap-12 cursor-grab active:cursor-grabbing"
@@ -134,6 +90,7 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
       style={{ transformOrigin: "50% 42%" }}
       animate={phase === "diving" ? { scale: 13 } : { scale: 1 }}
       transition={{ duration: 1.1, ease: [0.7, 0, 0.9, 0.6] }}
+      onAnimationComplete={() => phase === "diving" && finish()}
       onPan={(_, info) => {
         if (done.current) return;
         // accumulate distance — the tape never re-sticks

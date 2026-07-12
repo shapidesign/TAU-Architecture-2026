@@ -1,0 +1,104 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Cube, { ArrowGlyph } from "./Cube";
+
+export type GraduatePick = {
+  id: string;
+  name_he: string;
+  cover: string | null;
+};
+
+// deterministic pseudo-random from seed — safe for SSR hydration
+function rnd(seed: number, i: number): number {
+  const x = Math.sin(seed * 127.1 + i * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+/**
+ * A tumbling letter cube. Tap 1: lid swings open revealing a random
+ * graduate's work (image). Tap 2 within 5s: navigate to that graduate.
+ * Otherwise it closes itself and re-randomizes for the next tap.
+ */
+export default function LetterCube({
+  ch,
+  seed,
+  size,
+  pool,
+  className = "",
+}: {
+  ch: string; // single letter, "↑" renders the arrow glyph
+  seed: number;
+  size: string;
+  pool: GraduatePick[];
+  className?: string;
+}) {
+  const [pick, setPick] = useState<GraduatePick | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const router = useRouter();
+
+  useEffect(() => () => clearTimeout(timer.current ?? undefined), []);
+
+  const r = (i: number, min: number, max: number) =>
+    `${Math.round(min + rnd(seed, i) * (max - min))}deg`;
+
+  const style = {
+    "--s": size,
+    "--dur": `${(4 + rnd(seed, 9) * 4).toFixed(1)}s`,
+    "--delay": `-${(rnd(seed, 10) * 4).toFixed(1)}s`,
+    "--rx0": r(1, -32, -6),
+    "--ry0": r(2, 8, 42),
+    "--rz0": r(3, -14, 6),
+    "--rx1": r(4, 6, 34),
+    "--ry1": r(5, -44, -8),
+    "--rz1": r(6, -6, 14),
+  } as React.CSSProperties;
+
+  const glyph = ch === "↑" ? <ArrowGlyph /> : <span className="glyph">{ch}</span>;
+
+  return (
+    <div className={`scene3d ${className}`}>
+      <button
+        type="button"
+        aria-label={
+          pick ? `לפרויקט של ${pick.name_he}` : "פתחו את הקופסה לגלות פרויקט"
+        }
+        onClick={() => {
+          if (pick) {
+            clearTimeout(timer.current ?? undefined);
+            router.push(`/graduates/${pick.id}`);
+            return;
+          }
+          if (pool.length === 0) return;
+          setPick(pool[Math.floor(Math.random() * pool.length)]);
+          // closes by itself, next open reveals a new random graduate
+          timer.current = setTimeout(() => setPick(null), 5000);
+        }}
+        className="block cursor-pointer bg-transparent border-0 p-0"
+        style={{ width: size, height: size }}
+      >
+        <Cube
+          content={glyph}
+          className={`tumble lidcube ${pick ? "revealed" : ""}`}
+          style={style}
+          inner={
+            pick?.cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={pick.cover}
+                alt={`עבודה של ${pick.name_he}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : pick ? (
+              <span className="flex items-center justify-center w-full h-full text-[calc(var(--s)*0.14)] font-bold p-1 text-center">
+                {pick.name_he}
+              </span>
+            ) : null
+          }
+        />
+      </button>
+    </div>
+  );
+}

@@ -1,0 +1,382 @@
+"use client";
+
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import type { Faculty, Graduate, Settings } from "@/lib/types";
+import {
+  createFaculty,
+  createGraduate,
+  deleteFaculty,
+  deleteGraduate,
+  logoutAction,
+  saveSettings,
+  updateFaculty,
+  updateGraduate,
+} from "../actions";
+
+const TABS = [
+  ["invite", "הזמנה"],
+  ["grads", "בוגרים.ות"],
+  ["faculty", "סגל"],
+  ["theme", "צבעים"],
+] as const;
+
+const INVITE_FIELDS: [string, string][] = [
+  ["exh_he", "כותרת התערוכה — עברית"],
+  ["exh_en", "כותרת התערוכה — English"],
+  ["exh_ar", "כותרת התערוכה — عربي"],
+  ["faculty_he", "שם הפקולטה"],
+  ["title_he", "שם התערוכה — עברית"],
+  ["title_en_prefix", "טקסט לפני TRANSITION — English"],
+  ["title_ar", "שם התערוכה — عربي"],
+  ["dates", "תאריכים"],
+  ["opening_he", "טקסט אירוע הפתיחה"],
+  ["opening_time", "מועד הפתיחה"],
+  ["location_he", "מיקום"],
+];
+
+function Save({ label = "שמירה" }: { label?: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="bg-[var(--ink)] text-[var(--box)] px-6 py-2.5 font-bold disabled:opacity-50 cursor-pointer min-h-11"
+    >
+      {pending ? "שומר…" : label}
+    </button>
+  );
+}
+
+const input =
+  "border-2 border-[var(--ink)] bg-white px-3 py-2.5 text-base w-full";
+const label = "flex flex-col gap-1 text-sm font-bold";
+
+function GraduateFields({ g }: { g?: Graduate }) {
+  return (
+    <div className="grid sm:grid-cols-2 gap-3">
+      <label className={label}>
+        שם — עברית
+        <input name="name_he" defaultValue={g?.name_he} required className={input} />
+      </label>
+      <label className={label}>
+        שם — English
+        <input name="name_en" defaultValue={g?.name_en} dir="ltr" className={input} />
+      </label>
+      <label className={label}>
+        שם — عربي
+        <input name="name_ar" defaultValue={g?.name_ar} className={input} />
+      </label>
+      <label className={label}>
+        שם הפרויקט
+        <input name="title" defaultValue={g?.title} className={input} />
+      </label>
+      <label className={`${label} sm:col-span-2`}>
+        תיאור הפרויקט
+        <textarea
+          name="description"
+          defaultValue={g?.description}
+          rows={4}
+          className={input}
+        />
+      </label>
+      <label className={label}>
+        וידאו (YouTube / Vimeo / mp4)
+        <input name="video_url" defaultValue={g?.video_url} dir="ltr" className={input} />
+      </label>
+      <label className={label}>
+        לינק חיצוני
+        <input name="link_url" defaultValue={g?.link_url} dir="ltr" className={input} />
+      </label>
+      <label className={label}>
+        סדר תצוגה (קטן = ראשון)
+        <input
+          name="sort_order"
+          type="number"
+          defaultValue={g?.sort_order ?? 0}
+          className={input}
+        />
+      </label>
+      <label className={label}>
+        הוספת תמונות
+        <input
+          name="new_images"
+          type="file"
+          accept="image/*"
+          multiple
+          className={`${input} bg-white/60`}
+        />
+      </label>
+      {g && g.images.length > 0 && (
+        <fieldset className="sm:col-span-2">
+          <legend className="text-sm font-bold mb-2">
+            תמונות קיימות (בטלו סימון כדי למחוק בשמירה)
+          </legend>
+          <div className="flex flex-wrap gap-3">
+            {g.images.map((src) => (
+              <label key={src} className="relative block w-24 cursor-pointer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  className="w-24 h-24 object-cover border-2 border-[var(--ink)]"
+                />
+                <input
+                  type="checkbox"
+                  name="kept_images"
+                  value={src}
+                  defaultChecked
+                  className="absolute top-1 right-1 w-5 h-5 accent-[var(--ink)]"
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+    </div>
+  );
+}
+
+export default function AdminDashboard({
+  settings,
+  graduates,
+  faculty,
+}: {
+  settings: Settings;
+  graduates: Graduate[];
+  faculty: Faculty[];
+}) {
+  const [tab, setTab] = useState<(typeof TABS)[number][0]>("invite");
+  const [boxColor, setBoxColor] = useState(settings.box_color);
+  const [bgColor, setBgColor] = useState(settings.bg_color);
+
+  return (
+    <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <header className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-black">ניהול התערוכה</h1>
+        <form action={logoutAction}>
+          <button className="text-sm underline underline-offset-4 opacity-70 cursor-pointer min-h-11">
+            יציאה
+          </button>
+        </form>
+      </header>
+
+      <nav className="flex gap-2 mb-8 flex-wrap" role="tablist">
+        {TABS.map(([id, name]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={`px-5 py-2.5 border-2 border-[var(--ink)] font-bold cursor-pointer min-h-11 ${
+              tab === id ? "bg-[var(--ink)] text-[var(--box)]" : "bg-[var(--box)]"
+            }`}
+          >
+            {name}
+          </button>
+        ))}
+      </nav>
+
+      {tab === "invite" && (
+        <form action={saveSettings} className="flex flex-col gap-4">
+          {INVITE_FIELDS.map(([key, name]) => (
+            <label key={key} className={label}>
+              {name}
+              <input
+                name={key}
+                defaultValue={settings[key]}
+                dir={key.endsWith("_en") || key === "title_en_prefix" ? "ltr" : "rtl"}
+                className={input}
+              />
+            </label>
+          ))}
+          <div>
+            <Save />
+          </div>
+        </form>
+      )}
+
+      {tab === "grads" && (
+        <div className="flex flex-col gap-6">
+          <details className="border-2 border-dashed border-[var(--ink)] p-4 bg-white/40">
+            <summary className="font-black cursor-pointer text-lg min-h-11 flex items-center">
+              + הוספת בוגר.ת
+            </summary>
+            <form action={createGraduate} className="mt-4 flex flex-col gap-4">
+              <GraduateFields />
+              <div>
+                <Save label="הוספה" />
+              </div>
+            </form>
+          </details>
+
+          {graduates.map((g) => (
+            <details
+              key={g.id}
+              className="border-2 border-[var(--ink)] p-4 bg-[var(--box)]/40"
+            >
+              <summary className="font-bold cursor-pointer min-h-11 flex items-center gap-2">
+                {g.name_he || "(ללא שם)"}
+                <span className="opacity-60 text-sm font-normal">
+                  {g.title} · {g.images.length} תמונות
+                </span>
+              </summary>
+              <form action={updateGraduate} className="mt-4 flex flex-col gap-4">
+                <input type="hidden" name="id" value={g.id} />
+                <GraduateFields g={g} />
+                <div className="flex gap-3">
+                  <Save />
+                </div>
+              </form>
+              <form
+                action={deleteGraduate}
+                onSubmit={(e) => {
+                  if (!confirm(`למחוק את ${g.name_he}?`)) e.preventDefault();
+                }}
+                className="mt-3"
+              >
+                <input type="hidden" name="id" value={g.id} />
+                <button className="text-red-700 text-sm underline underline-offset-4 cursor-pointer min-h-11">
+                  מחיקת בוגר.ת
+                </button>
+              </form>
+            </details>
+          ))}
+        </div>
+      )}
+
+      {tab === "faculty" && (
+        <div className="flex flex-col gap-4">
+          <form
+            action={createFaculty}
+            className="border-2 border-dashed border-[var(--ink)] p-4 bg-white/40 grid sm:grid-cols-4 gap-3 items-end"
+          >
+            <label className={label}>
+              שם — עברית
+              <input name="name_he" required className={input} />
+            </label>
+            <label className={label}>
+              שם — English
+              <input name="name_en" dir="ltr" className={input} />
+            </label>
+            <label className={label}>
+              תפקיד
+              <input name="role" className={input} />
+            </label>
+            <Save label="+ הוספה" />
+          </form>
+
+          {faculty.map((f, i) => (
+            <div key={f.id} className="border-2 border-[var(--ink)] p-4 bg-[var(--box)]/40">
+              <form action={updateFaculty} className="grid sm:grid-cols-5 gap-3 items-end">
+                <input type="hidden" name="id" value={f.id} />
+                <label className={label}>
+                  שם — עברית
+                  <input name="name_he" defaultValue={f.name_he} className={input} />
+                </label>
+                <label className={label}>
+                  שם — English
+                  <input name="name_en" defaultValue={f.name_en} dir="ltr" className={input} />
+                </label>
+                <label className={label}>
+                  תפקיד
+                  <input name="role" defaultValue={f.role} className={input} />
+                </label>
+                <label className={label}>
+                  סדר
+                  <input
+                    name="sort_order"
+                    type="number"
+                    defaultValue={f.sort_order || i}
+                    className={input}
+                  />
+                </label>
+                <Save />
+              </form>
+              <form
+                action={deleteFaculty}
+                onSubmit={(e) => {
+                  if (!confirm(`למחוק את ${f.name_he}?`)) e.preventDefault();
+                }}
+                className="mt-2"
+              >
+                <input type="hidden" name="id" value={f.id} />
+                <button className="text-red-700 text-sm underline underline-offset-4 cursor-pointer min-h-11">
+                  מחיקה
+                </button>
+              </form>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "theme" && (
+        <form action={saveSettings} className="flex flex-col gap-6 max-w-sm">
+          <label className={label}>
+            צבע הקופסאות
+            <span className="flex items-center gap-3">
+              <input
+                name="box_color"
+                type="color"
+                value={boxColor}
+                onChange={(e) => {
+                  setBoxColor(e.target.value);
+                  document.body.style.setProperty("--box", e.target.value);
+                }}
+                className="w-16 h-12 border-2 border-[var(--ink)] cursor-pointer"
+              />
+              <code dir="ltr">{boxColor}</code>
+            </span>
+          </label>
+
+          <label className={label}>
+            צבע הרקע
+            <span className="flex items-center gap-3">
+              <input
+                name="bg_color"
+                type="color"
+                value={bgColor}
+                onChange={(e) => {
+                  setBgColor(e.target.value);
+                  document.body.style.setProperty("--bg", e.target.value);
+                }}
+                className="w-16 h-12 border-2 border-[var(--ink)] cursor-pointer"
+              />
+              <code dir="ltr">{bgColor}</code>
+            </span>
+          </label>
+
+          {/* live preview */}
+          <div className="scene3d py-6">
+            <div
+              className="cube tumble mx-auto"
+              style={
+                {
+                  "--s": "90px",
+                  "--dur": "5s",
+                  "--rx0": "-20deg",
+                  "--ry0": "30deg",
+                  "--rz0": "0deg",
+                  "--rx1": "15deg",
+                  "--ry1": "-25deg",
+                  "--rz1": "5deg",
+                } as React.CSSProperties
+              }
+            >
+              <div className="face f-front"><span className="glyph">T</span></div>
+              <div className="face f-back"><span className="glyph">T</span></div>
+              <div className="face f-right" />
+              <div className="face f-left" />
+              <div className="face f-top" />
+              <div className="face f-bottom" />
+            </div>
+          </div>
+
+          <div>
+            <Save />
+          </div>
+        </form>
+      )}
+    </main>
+  );
+}

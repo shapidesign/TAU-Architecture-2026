@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# אדריכלות במעבר · Architecture in Transition
 
-## Getting Started
+Invitation + showcase site for the TAU Azrieli School of Architecture graduate
+exhibition. Mobile-first, trilingual (עברית / English / عربي), themed as a
+cardboard box that the visitor tears open.
 
-First, run the development server:
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. Content comes from Supabase (project
+`TAU-Architecture-2026`, ref `pvwunsndetcofttmkbpz`); credentials live in
+`.env.local`. Without them the site still renders with the poster defaults.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Admin
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`/admin` — username `tau`, password `2026` (set in `.env.local` /
+Vercel env vars). Tabs: invitation texts (3 languages), graduates
+(details + image uploads + video links), faculty, theme colors.
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx vercel login          # one-time
+npx vercel --prod
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Then in the Vercel dashboard → Project → Settings → Environment Variables,
+add every variable from `.env.local` (SUPABASE_URL, SUPABASE_KEY, ADMIN_USER,
+ADMIN_PASS, AUTH_SECRET) and redeploy.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ⚠️ Fonts
 
-## Deploy on Vercel
+`public/fonts/` currently holds **Narkiss Block TRIAL** files. Buy a web
+license from [Fontef](https://fontef.com) before launch and replace the three
+files (same names). Arabic uses Noto Kufi Arabic (free, via Google Fonts).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The Supabase anon key is used server-side only (never shipped to the
+  browser) and doubles as the write credential; RLS is permissive for it.
+  If the key ever leaks, rotate it in Supabase → Settings → API.
+- Intro animation is skipped automatically for returning visitors
+  (localStorage) and for `prefers-reduced-motion` users.

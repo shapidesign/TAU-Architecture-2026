@@ -16,6 +16,23 @@ export const DEFAULT_SETTINGS: Settings = {
   location_he: "בניין דה בוטון, אוני׳ תל אביב",
   box_color: "#FDE767",
   bg_color: "#D6D6D6",
+  // logo (uploaded via admin), position is physical left/right
+  logo_url: "",
+  logo_pos: "right",
+  // typography of the three main title lines: size px, weight, line-height,
+  // style: normal | outline | mixed (first word outlined)
+  t_he_size: "36",
+  t_he_weight: "900",
+  t_he_lh: "1.15",
+  t_he_style: "mixed",
+  t_en_size: "36",
+  t_en_weight: "900",
+  t_en_lh: "1.15",
+  t_en_style: "normal",
+  t_ar_size: "34",
+  t_ar_weight: "700",
+  t_ar_lh: "1.4",
+  t_ar_style: "outline",
 };
 
 export async function getSettings(): Promise<Settings> {

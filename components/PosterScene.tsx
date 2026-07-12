@@ -3,6 +3,21 @@ import type { Settings } from "@/lib/types";
 
 const SIZE = "clamp(64px, 21vw, 104px)";
 
+const OUTLINE: React.CSSProperties = {
+  color: "transparent",
+  WebkitTextStroke: "1.5px var(--ink)",
+};
+
+// admin-controlled typography for a title line (size/weight/leading/outline)
+function titleStyle(s: Settings, k: string): React.CSSProperties {
+  return {
+    fontSize: `min(${s[`${k}_size`]}px, 9.5vw)`,
+    fontWeight: Number(s[`${k}_weight`]) || 900,
+    lineHeight: Number(s[`${k}_lh`]) || 1.15,
+    ...(s[`${k}_style`] === "outline" ? OUTLINE : {}),
+  };
+}
+
 // TRANSITION split into poster rows; "↑" = the arrow-I glyph
 const ROWS: string[][] = [
   ["T", "R", "A"],
@@ -37,6 +52,17 @@ export default function PosterScene({
   return (
     <section className="w-full max-w-md mx-auto px-6 pt-6 overflow-hidden">
       {/* header — like the poster's top right block */}
+      {/* admin-uploaded logo, physical left/right (dir=ltr so it's not RTL-flipped) */}
+      {s.logo_url && (
+        <div
+          dir="ltr"
+          className={`flex mb-4 ${s.logo_pos === "left" ? "justify-start" : "justify-end"}`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={s.logo_url} alt="לוגו" className="h-12 w-auto" />
+        </div>
+      )}
+
       <header className="text-right mb-8">
         <h1 className="text-2xl font-bold leading-tight">{s.exh_he}</h1>
         <p className="text-xl leading-loose" lang="ar" dir="rtl">
@@ -53,14 +79,15 @@ export default function PosterScene({
         {ROWS[0].map((ch, i) => cube(ch, OFFSETS[0][i]))}
       </div>
 
-      <h2 className="text-center text-4xl font-black my-6">
-        <span
-          className="text-transparent"
-          style={{ WebkitTextStroke: "1.5px var(--ink)" }}
-        >
-          {s.title_he.split(" ")[0]}
-        </span>{" "}
-        {s.title_he.split(" ").slice(1).join(" ")}
+      <h2 className="text-center my-6" style={titleStyle(s, "t_he")}>
+        {s.t_he_style === "mixed" ? (
+          <>
+            <span style={OUTLINE}>{s.title_he.split(" ")[0]}</span>{" "}
+            {s.title_he.split(" ").slice(1).join(" ")}
+          </>
+        ) : (
+          s.title_he
+        )}
       </h2>
 
       {/* row 2: N S ↑ */}
@@ -68,7 +95,12 @@ export default function PosterScene({
         {ROWS[1].map((ch, i) => cube(ch, OFFSETS[1][i]))}
       </div>
 
-      <h2 className="text-center text-4xl font-black my-6" dir="ltr" lang="en">
+      <h2
+        className="text-center my-6"
+        dir="ltr"
+        lang="en"
+        style={titleStyle(s, "t_en")}
+      >
         {s.title_en_prefix}
       </h2>
 
@@ -77,12 +109,7 @@ export default function PosterScene({
         {ROWS[2].map((ch, i) => cube(ch, OFFSETS[2][i]))}
       </div>
 
-      <h2
-        className="text-center text-4xl font-bold my-6 text-transparent"
-        lang="ar"
-        dir="rtl"
-        style={{ WebkitTextStroke: "1.3px var(--ink)" }}
-      >
+      <h2 className="text-center my-6" lang="ar" dir="rtl" style={titleStyle(s, "t_ar")}>
         {s.title_ar}
       </h2>
 

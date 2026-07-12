@@ -38,6 +38,40 @@ export async function saveSettings(fd: FormData): Promise<void> {
   refresh();
 }
 
+export async function saveLogo(fd: FormData): Promise<void> {
+  await assertAdmin();
+  let url = String(fd.get("current_logo") ?? "");
+  const file = fd.get("logo") as File | null;
+  if (file && file.size > 0) {
+    const ext = file.name.split(".").pop() || "png";
+    const path = `branding/logo-${Date.now()}.${ext}`;
+    const { error } = await sb()
+      .storage.from("projects")
+      .upload(path, Buffer.from(await file.arrayBuffer()), {
+        contentType: file.type || "image/png",
+      });
+    if (error) throw new Error(error.message);
+    url = sb().storage.from("projects").getPublicUrl(path).data.publicUrl;
+  }
+  const { error } = await sb()
+    .from("settings")
+    .upsert([
+      { key: "logo_url", value: url },
+      { key: "logo_pos", value: String(fd.get("logo_pos") ?? "right") },
+    ]);
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
+export async function removeLogo(): Promise<void> {
+  await assertAdmin();
+  const { error } = await sb()
+    .from("settings")
+    .upsert([{ key: "logo_url", value: "" }]);
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
 async function uploadImages(gradId: string, files: File[]): Promise<string[]> {
   const urls: string[] = [];
   for (const file of files) {

@@ -9,6 +9,8 @@ import {
   deleteFaculty,
   deleteGraduate,
   logoutAction,
+  removeLogo,
+  saveLogo,
   saveSettings,
   updateFaculty,
   updateGraduate,
@@ -20,6 +22,12 @@ const TABS = [
   ["faculty", "סגל"],
   ["theme", "צבעים"],
 ] as const;
+
+const TYPO_ROWS: [string, string][] = [
+  ["t_he", "כותרת עברית — אדריכלות במעבר"],
+  ["t_en", "כותרת אנגלית — Architecture in"],
+  ["t_ar", "כותרת ערבית"],
+];
 
 const INVITE_FIELDS: [string, string][] = [
   ["exh_he", "כותרת התערוכה — עברית"],
@@ -178,22 +186,140 @@ export default function AdminDashboard({
       </nav>
 
       {tab === "invite" && (
-        <form action={saveSettings} className="flex flex-col gap-4">
-          {INVITE_FIELDS.map(([key, name]) => (
-            <label key={key} className={label}>
-              {name}
+        <>
+          <form action={saveSettings} className="flex flex-col gap-4">
+            {INVITE_FIELDS.map(([key, name]) => (
+              <label key={key} className={label}>
+                {name}
+                <input
+                  name={key}
+                  defaultValue={settings[key]}
+                  dir={key.endsWith("_en") || key === "title_en_prefix" ? "ltr" : "rtl"}
+                  className={input}
+                />
+              </label>
+            ))}
+
+            <h2 className="text-lg font-black mt-4">טיפוגרפיה — כותרות ראשיות</h2>
+            {TYPO_ROWS.map(([k, name]) => (
+              <fieldset
+                key={k}
+                className="border-2 border-[var(--ink)]/30 p-3 grid grid-cols-2 sm:grid-cols-4 gap-3"
+              >
+                <legend className="text-sm font-bold px-1">{name}</legend>
+                <label className={label}>
+                  גודל (px)
+                  <input
+                    name={`${k}_size`}
+                    type="number"
+                    min={14}
+                    max={90}
+                    defaultValue={settings[`${k}_size`]}
+                    className={input}
+                  />
+                </label>
+                <label className={label}>
+                  משקל
+                  <select
+                    name={`${k}_weight`}
+                    defaultValue={settings[`${k}_weight`]}
+                    className={input}
+                  >
+                    <option value="400">רגיל (400)</option>
+                    <option value="700">מודגש (700)</option>
+                    <option value="900">שחור (900)</option>
+                  </select>
+                </label>
+                <label className={label}>
+                  מרווח שורות
+                  <input
+                    name={`${k}_lh`}
+                    type="number"
+                    step="0.05"
+                    min={0.9}
+                    max={2.5}
+                    defaultValue={settings[`${k}_lh`]}
+                    className={input}
+                  />
+                </label>
+                <label className={label}>
+                  סגנון
+                  <select
+                    name={`${k}_style`}
+                    defaultValue={settings[`${k}_style`]}
+                    className={input}
+                  >
+                    <option value="normal">רגיל</option>
+                    <option value="outline">קו מתאר</option>
+                    <option value="mixed">משולב (מילה ראשונה בקו מתאר)</option>
+                  </select>
+                </label>
+              </fieldset>
+            ))}
+
+            <div>
+              <Save />
+            </div>
+          </form>
+
+          <h2 className="text-lg font-black mt-8 mb-3">לוגו</h2>
+          <form
+            action={saveLogo}
+            className="border-2 border-dashed border-[var(--ink)] p-4 bg-white/40 flex flex-col gap-4"
+          >
+            <input type="hidden" name="current_logo" value={settings.logo_url} />
+            {settings.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settings.logo_url}
+                alt="הלוגו הנוכחי"
+                className="h-12 w-auto self-start bg-white/60 p-1"
+              />
+            )}
+            <label className={label}>
+              קובץ לוגו (PNG/SVG שקוף מומלץ)
               <input
-                name={key}
-                defaultValue={settings[key]}
-                dir={key.endsWith("_en") || key === "title_en_prefix" ? "ltr" : "rtl"}
-                className={input}
+                name="logo"
+                type="file"
+                accept="image/*"
+                className={`${input} bg-white/60`}
               />
             </label>
-          ))}
-          <div>
-            <Save />
-          </div>
-        </form>
+            <fieldset className="flex gap-6 items-center">
+              <legend className="text-sm font-bold mb-1">מיקום</legend>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="logo_pos"
+                  value="right"
+                  defaultChecked={settings.logo_pos !== "left"}
+                  className="w-5 h-5 accent-[var(--ink)]"
+                />
+                ימין למעלה
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="logo_pos"
+                  value="left"
+                  defaultChecked={settings.logo_pos === "left"}
+                  className="w-5 h-5 accent-[var(--ink)]"
+                />
+                שמאל למעלה
+              </label>
+            </fieldset>
+            <div className="flex gap-4 items-center">
+              <Save label="שמירת לוגו" />
+            </div>
+          </form>
+          {settings.logo_url && (
+            <form action={removeLogo} className="mt-2">
+              <button className="text-red-700 text-sm underline underline-offset-4 cursor-pointer min-h-11">
+                הסרת הלוגו
+              </button>
+            </form>
+          )}
+        </>
       )}
 
       {tab === "grads" && (

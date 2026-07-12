@@ -3,28 +3,41 @@
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 
-type Phase = "tape" | "opening" | "diving" | "hidden";
+type Phase = "tape" | "turning" | "diving" | "unfold" | "hidden";
+
+// module state: survives client-side navigation, resets on full page load —
+// so the intro plays once per refresh, not on every return to the homepage
+let playedThisPageLoad = false;
 
 /**
- * Fullscreen intro: a closed cardboard box sealed with masking tape.
- * Dragging peels the tape along the seam; progress accumulates and the
- * tape STAYS where you leave it (no spring back). When fully peeled the
- * flaps burst open and the camera dives into the box.
- * Shown on every visit; skipped only for prefers-reduced-motion.
+ * Intro: a sealed cardboard box. Drag peels the masking tape (progress
+ * accumulates — the tape stays where you leave it). Fully peeled, the box
+ * turns its opening toward the viewer, the flaps swing open, the camera
+ * flies through the mouth into grey, and the sides of the box unfold
+ * outward to become the page background. Then the letter cubes appear.
  */
-export default function IntroBox() {
-  const [phase, setPhase] = useState<Phase>("tape");
-  const opening = phase === "opening" || phase === "diving";
+export default function IntroBox({ onDone }: { onDone?: () => void }) {
+  const [phase, setPhase] = useState<Phase>(() =>
+    playedThisPageLoad ? "hidden" : "tape"
+  );
+  const facing = phase !== "tape" && phase !== "hidden"; // mouth toward viewer
   const peel = useMotionValue(0); // 0..1 accumulated peel progress
   const done = useRef(false);
+  const notified = useRef(false);
 
-  // tape peels along the seam, lifting and shearing as it goes
-  const tapeY = useTransform(peel, (p) => `${-p * 165}%`);
-  const tapeRot = useTransform(peel, (p) => -p * 26);
-  const tapeSkew = useTransform(peel, (p) => p * 10);
-  const tapeShadow = useTransform(
+  // realistic peel: the stuck strip shortens while a roll of tape grows at
+  // the peel front, travels along the seam, and finally rips off
+  const remH = useTransform(peel, (p) => `${Math.max(0, (1 - p) * 100)}%`);
+  const rollH = useTransform(peel, (p) => `${7 + Math.min(p, 1) * 15}%`);
+  const rollTop = useTransform(
     peel,
-    (p) => `0 ${4 + p * 22}px ${8 + p * 26}px rgba(0,0,0,${0.15 + p * 0.3})`
+    (p) => `calc(${(1 - p) * 100}% - ${(7 + Math.min(p, 1) * 15) / 2}%)`
+  );
+  const rollSpin = useTransform(peel, (p) => `${p * -80}px`); // surface rolling
+  const rollWobble = useTransform(peel, (p) => -p * 9);
+  const rollShadow = useTransform(
+    peel,
+    (p) => `0 ${2 + p * 12}px ${6 + p * 16}px rgba(0,0,0,${0.18 + p * 0.22})`
   );
   const tapeOpacity = useTransform(peel, [0, 1, 1.35], [1, 1, 0]);
   // the box strains a little as the tape is pulled
@@ -32,13 +45,18 @@ export default function IntroBox() {
   const hintOpacity = useTransform(peel, [0, 0.35], [1, 0]);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setPhase("hidden");
+    playedThisPageLoad = true;
+    if (
+      phase === "hidden" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      finish();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (phase === "tape" || phase === "opening") {
+    if (phase !== "hidden") {
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = "";
@@ -49,26 +67,71 @@ export default function IntroBox() {
   function finish() {
     document.body.style.overflow = "";
     setPhase("hidden");
+    if (!notified.current) {
+      notified.current = true;
+      onDone?.();
+    }
   }
 
   function open() {
     if (done.current) return;
     done.current = true;
     animate(peel, 1.5, { duration: 0.4, ease: "easeIn" }); // tape rips off
-    setPhase("opening");
-    setTimeout(() => setPhase("diving"), 1100);
+    setPhase("turning"); // box rotates, mouth to camera, flaps swing open
+    setTimeout(() => setPhase("diving"), 1900); // fly through the mouth
+    setTimeout(() => setPhase("unfold"), 2950); // sides unfold into the bg
   }
 
   if (phase === "hidden") return null;
 
+  // ---- stage 2: the box sides unfold outward and become the background ----
+  if (phase === "unfold") {
+    const flap =
+      "absolute bg-[var(--bg)] border-[3px] border-[color-mix(in_srgb,var(--bg),black_14%)] shadow-[0_0_50px_rgba(0,0,0,0.25)]";
+    const spring = { type: "spring" as const, stiffness: 55, damping: 16 };
+    return (
+      <div
+        className="fixed inset-0 z-50 pointer-events-none"
+        style={{ perspective: "1300px" }}
+      >
+        {/* long sides (left/right) first, then top/bottom — like a real box */}
+        <motion.div
+          className={`${flap} inset-y-0 left-0 w-1/2 origin-left`}
+          initial={{ rotateY: 0, filter: "brightness(1)" }}
+          animate={{ rotateY: -118, filter: "brightness(0.85)" }}
+          transition={{ ...spring, delay: 0 }}
+        />
+        <motion.div
+          className={`${flap} inset-y-0 right-0 w-1/2 origin-right`}
+          initial={{ rotateY: 0, filter: "brightness(1)" }}
+          animate={{ rotateY: 118, filter: "brightness(0.85)" }}
+          transition={{ ...spring, delay: 0.16 }}
+        />
+        <motion.div
+          className={`${flap} inset-x-0 top-0 h-1/2 origin-top`}
+          initial={{ rotateX: 0, filter: "brightness(1)" }}
+          animate={{ rotateX: 118, filter: "brightness(0.85)" }}
+          transition={{ ...spring, delay: 0.32 }}
+        />
+        <motion.div
+          className={`${flap} inset-x-0 bottom-0 h-1/2 origin-bottom`}
+          initial={{ rotateX: 0, filter: "brightness(1)" }}
+          animate={{ rotateX: -118, filter: "brightness(0.85)" }}
+          transition={{ ...spring, delay: 0.48 }}
+          onAnimationComplete={finish}
+        />
+      </div>
+    );
+  }
+
+  // ---- stage 1: sealed box → peel → turn to face viewer → dive ----
   return (
     <motion.div
       className="fixed inset-0 z-50 bg-[var(--bg)] touch-none select-none flex flex-col items-center justify-center gap-12 cursor-grab active:cursor-grabbing"
-      animate={
-        phase === "diving" ? { scale: 8, rotate: -4, opacity: 0 } : { opacity: 1 }
-      }
-      transition={{ duration: 1, ease: [0.6, 0, 0.85, 0.5] }}
-      onAnimationComplete={() => phase === "diving" && finish()}
+      // the camera flies straight through the box mouth
+      style={{ transformOrigin: "50% 42%" }}
+      animate={phase === "diving" ? { scale: 13 } : { scale: 1 }}
+      transition={{ duration: 1.1, ease: [0.7, 0, 0.9, 0.6] }}
       onPan={(_, info) => {
         if (done.current) return;
         // accumulate distance — the tape never re-sticks
@@ -85,67 +148,55 @@ export default function IntroBox() {
       {/* idle wobble wrapper — the box rocks gently, waiting */}
       <motion.div
         animate={
-          opening
-            ? { rotate: 0, scale: [1, 1.05, 1] }
-            : { rotate: [0, -1.6, 0, 1.6, 0] }
+          facing ? { rotate: 0, scale: 1.06 } : { rotate: [0, -1.6, 0, 1.6, 0] }
         }
         transition={
-          opening
-            ? { duration: 0.7 }
+          facing
+            ? { duration: 0.9, ease: "easeInOut" }
             : { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
         }
       >
         <motion.div className="scene3d" style={{ rotate: boxTilt }}>
-          <div
+          <motion.div
             className="cube"
-            style={
-              {
-                "--s": "min(58vw, 280px)",
-                transform: "rotateX(-30deg) rotateY(36deg)",
-              } as React.CSSProperties
-            }
+            style={{ "--s": "min(58vw, 280px)" } as React.CSSProperties}
+            initial={{ rotateX: -30, rotateY: 36 }}
+            // the opening turns to face the viewer
+            animate={facing ? { rotateX: -92, rotateY: 0 } : {}}
+            transition={{ duration: 0.9, ease: [0.55, 0.1, 0.3, 1] }}
           >
             <div className="face f-front" />
             <div className="face f-back" />
             <div className="face f-right" />
             <div className="face f-left" />
             <div className="face f-bottom" />
-            {/* top face: interior + two flaps + tape */}
+            {/* top face: grey interior + two flaps + tape.
+                overflow must stay visible: overflow:hidden would clip the
+                flaps and flatten their 3D rotation */}
             <div
-              className="face f-top !bg-transparent !border-0"
+              className="face f-top !bg-transparent !border-0 !overflow-visible"
               style={{ transformStyle: "preserve-3d" }}
             >
-              {/* box interior with a peek of small boxes */}
-              <div className="absolute inset-0 border-2 border-[var(--edge)] bg-[color-mix(in_srgb,var(--box),black_58%)] flex items-center justify-center gap-[6%] overflow-hidden">
-                {[12, -8, 20].map((r) => (
-                  <motion.div
-                    key={r}
-                    className="w-[22%] aspect-square bg-[var(--box)] opacity-90"
-                    style={{ rotate: r }}
-                    animate={opening ? { y: "-12%" } : { y: "18%" }}
-                    transition={{ duration: 0.5, delay: 0.55 }}
-                  />
-                ))}
-              </div>
-              {/* flaps — hinge on outer edges, spring open with overshoot */}
+              <div className="absolute inset-0 border-2 border-[var(--edge)] bg-[var(--bg)]" />
+              {/* flaps — swing open toward the viewer once the box faces us */}
               <motion.div
                 className="absolute top-0 left-0 h-full w-1/2 bg-[var(--box)] border-2 border-[var(--edge)] origin-left"
-                animate={opening ? { rotateY: -165 } : { rotateY: 0 }}
+                animate={facing ? { rotateY: -150 } : { rotateY: 0 }}
                 transition={{
                   type: "spring",
-                  stiffness: 160,
-                  damping: 14,
-                  delay: 0.3,
+                  stiffness: 130,
+                  damping: 15,
+                  delay: 1.0,
                 }}
               />
               <motion.div
                 className="absolute top-0 right-0 h-full w-1/2 bg-[var(--box)] border-2 border-[var(--edge)] origin-right"
-                animate={opening ? { rotateY: 165 } : { rotateY: 0 }}
+                animate={facing ? { rotateY: 150 } : { rotateY: 0 }}
                 transition={{
                   type: "spring",
-                  stiffness: 160,
-                  damping: 14,
-                  delay: 0.42,
+                  stiffness: 130,
+                  damping: 15,
+                  delay: 1.15,
                 }}
               />
               {/* masking tape over the seam — peels along it */}
@@ -162,9 +213,17 @@ export default function IntroBox() {
                 }}
               />
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </motion.div>
+
+      {/* grey swallows the screen as the camera passes through the mouth */}
+      <motion.div
+        className="absolute inset-0 bg-[var(--bg)] pointer-events-none"
+        initial={false}
+        animate={{ opacity: phase === "diving" ? 1 : 0 }}
+        transition={{ duration: 0.35, delay: phase === "diving" ? 0.7 : 0 }}
+      />
 
       <motion.p
         style={{ opacity: hintOpacity }}

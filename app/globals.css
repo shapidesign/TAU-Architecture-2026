@@ -26,6 +26,7 @@
   /* face shades: same hue, slightly darkened for depth (flat poster look) */
   --box-side: color-mix(in srgb, var(--box), black 7%);
   --box-dark: color-mix(in srgb, var(--box), black 14%);
+  --box-in: color-mix(in srgb, var(--box), black 58%); /* cardboard interior */
   --edge: color-mix(in srgb, var(--bg), white 45%);
 }
 

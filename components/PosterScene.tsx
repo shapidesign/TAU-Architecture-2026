@@ -89,13 +89,17 @@ export default function PosterScene({
       {/* row 4: N + dates block */}
       <div className="flex justify-between items-end mb-4" dir="ltr">
         {ROWS[3].map((ch, i) => cube(ch, OFFSETS[3][i]))}
-        <div className="text-left" dir="ltr">
-          <p className="text-4xl font-black tracking-tight">{s.dates}</p>
-          <p className="text-2xl text-right" dir="rtl">
+        <div className="text-right ms-auto">
+          <p className="text-4xl font-black tracking-tight" dir="ltr">
+            {s.dates}
+          </p>
+          <p className="text-2xl" dir="rtl">
             {s.opening_he}
           </p>
-          <p className="text-2xl">{s.opening_time}</p>
-          <p className="mt-2 text-base text-right" dir="rtl">
+          <p className="text-2xl" dir="ltr">
+            {s.opening_time}
+          </p>
+          <p className="mt-2 text-base" dir="rtl">
             {s.location_he}
           </p>
         </div>

@@ -9,7 +9,7 @@ export const DEFAULT_SETTINGS: Settings = {
   faculty_he: "הפקולטה לאדריכלות ע״ש דוד עזריאלי",
   title_he: "אדריכלות במעבר",
   title_en_prefix: "Architecture in",
-  title_ar: "في حركة عمارة",
+  title_ar: "عمارة قيد الانتقال",
   dates: "09.08–13.08",
   opening_he: "אירוע הפתיחה",
   opening_time: "18:30 09.08",

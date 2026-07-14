@@ -27,20 +27,24 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
   // realistic peel: the stuck strip shortens while a roll of tape grows at
   // the peel front, travels along the seam, and finally rips off
   const remH = useTransform(peel, (p) => `${Math.max(0, (1 - p) * 100)}%`);
-  const rollH = useTransform(peel, (p) => `${7 + Math.min(p, 1) * 15}%`);
+  const rollH = useTransform(peel, (p) => `${8 + Math.min(p, 1) * 19}%`);
   const rollTop = useTransform(
     peel,
-    (p) => `calc(${(1 - p) * 100}% - ${(7 + Math.min(p, 1) * 15) / 2}%)`
+    (p) => `calc(${(1 - p) * 100}% - ${(8 + Math.min(p, 1) * 19) / 2}%)`
   );
-  const rollSpin = useTransform(peel, (p) => `${p * -80}px`); // surface rolling
-  const rollWobble = useTransform(peel, (p) => -p * 9);
+  const rollSpin = useTransform(peel, (p) => `${p * -110}px`); // surface rolling
+  const rollWobble = useTransform(peel, (p) => Math.sin(p * Math.PI * 5) * 2 - p * 8);
   const rollShadow = useTransform(
     peel,
-    (p) => `0 ${2 + p * 12}px ${6 + p * 16}px rgba(0,0,0,${0.18 + p * 0.22})`
+    (p) =>
+      `${p * -5}px ${3 + p * 14}px ${7 + p * 19}px rgba(29,24,13,${0.16 + p * 0.2})`
   );
   const tapeOpacity = useTransform(peel, [0, 1, 1.35], [1, 1, 0]);
+  const curlOpacity = useTransform(peel, [0, 0.08, 1, 1.35], [0, 1, 1, 0]);
+  const tapeStretch = useTransform(peel, (p) => 1 + Math.sin(Math.min(p, 1) * Math.PI) * 0.035);
   // the box strains a little as the tape is pulled
-  const boxTilt = useTransform(peel, (p) => -p * 5);
+  const boxTilt = useTransform(peel, (p) => -p * 3.5);
+  const boxLift = useTransform(peel, (p) => -p * 8);
   const hintOpacity = useTransform(peel, [0, 0.35], [1, 0]);
 
   useEffect(() => {
@@ -75,7 +79,7 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
   function open() {
     if (done.current) return;
     done.current = true;
-    animate(peel, 1.5, { duration: 0.4, ease: "easeIn" }); // tape rips off
+    animate(peel, 1.5, { duration: 0.5, ease: [0.22, 0.65, 0.2, 1] }); // tape rips off
     setPhase("turning"); // box rotates, mouth to camera, flaps swing open
     setTimeout(() => setPhase("diving"), 1900); // fly through the mouth
   }
@@ -115,7 +119,7 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
             : { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
         }
       >
-        <motion.div className="scene3d" style={{ rotate: boxTilt }}>
+        <motion.div className="scene3d" style={{ rotate: boxTilt, y: boxLift }}>
           <motion.div
             className="cube"
             style={{ "--s": "min(58vw, 280px)" } as React.CSSProperties}
@@ -162,31 +166,39 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
               <div className="absolute inset-y-[-6%] left-[36%] w-[28%] pointer-events-none">
                 {/* remaining stuck tape, torn edge at the peel front */}
                 <motion.div
-                  className="absolute inset-x-0 top-0 bg-[#f3eedf]/95"
+                  className="masking-tape absolute inset-x-0 top-0"
                   style={{
                     height: remH,
+                    scaleY: tapeStretch,
+                    transformOrigin: "top",
                     clipPath:
                       "polygon(0 2%, 25% 0, 50% 2%, 75% 0, 100% 2%, 100% 98%, 78% 100%, 55% 97.5%, 30% 100%, 0 97.5%)",
                   }}
                 />
+                {/* curled underside catches light before the roll reaches it */}
+                <motion.div
+                  className="tape-curl absolute inset-x-[-7%] rounded-[50%]"
+                  style={{
+                    top: rollTop,
+                    height: rollH,
+                    rotate: rollWobble,
+                    opacity: curlOpacity,
+                  }}
+                />
                 {/* the roll — grows as it swallows tape, surface spins */}
                 <motion.div
-                  className="absolute inset-x-[-18%] rounded-full overflow-hidden"
+                  className="tape-roll absolute inset-x-[-18%] rounded-full overflow-hidden"
                   style={{
                     top: rollTop,
                     height: rollH,
                     rotate: rollWobble,
                     opacity: tapeOpacity,
                     boxShadow: rollShadow,
-                    background:
-                      "linear-gradient(to bottom, #fcf8ec 0%, #f3eedf 40%, #cfc8b0 82%, #e8e2cf 100%)",
                   }}
                 >
                   <motion.div
-                    className="absolute inset-0"
+                    className="tape-fibres absolute inset-0"
                     style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(to top, rgba(0,0,0,0.06) 0 2px, transparent 2px 6px)",
                       backgroundPositionY: rollSpin,
                     }}
                   />

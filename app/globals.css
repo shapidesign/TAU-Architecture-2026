@@ -95,6 +95,185 @@ body {
   user-select: none;
 }
 
+.cube .latin-glyph {
+  font-family: var(--font-bebas), "Arial Narrow", sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--s) * 0.76);
+  transform: scaleX(0.88);
+}
+
+/* ---------- poster composition ---------- */
+
+.exhibition-title {
+  font-size: clamp(1.2rem, 5.2vw, 1.75rem);
+  line-height: 1.08;
+}
+
+.faculty-title {
+  font-size: clamp(0.58rem, 2.5vw, 0.72rem);
+  line-height: 1.15;
+}
+
+.poster-title {
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+.folded-arrow {
+  width: clamp(68px, 19vw, 94px);
+  height: auto;
+  transform: rotate(-8deg);
+  filter: drop-shadow(2px 3px 0 color-mix(in srgb, var(--bg), black 8%));
+}
+
+.folded-arrow-flip {
+  transform: scaleX(-1) rotate(-13deg) translateY(8px);
+}
+
+.date-number {
+  font-size: clamp(4.6rem, 21vw, 6rem);
+  line-height: 0.76;
+}
+
+.event-line {
+  font-size: clamp(0.92rem, 4vw, 1.15rem);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.location-copy {
+  font-size: clamp(0.8rem, 3.5vw, 1rem);
+  line-height: 1.12;
+}
+
+.poster-story {
+  width: 1080px;
+  height: 1920px;
+  max-width: none;
+  margin: 0;
+  padding: 70px 84px 58px;
+  background: var(--bg);
+}
+
+.story-stage {
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+}
+
+html:has(.poster-story),
+body:has(.poster-story) {
+  width: 1080px;
+  height: 1920px;
+  min-height: 1920px;
+  overflow: hidden;
+}
+
+body:has(.poster-story) footer {
+  display: none;
+}
+
+.poster-story .poster-top {
+  margin-bottom: 58px;
+}
+
+.poster-story .exhibition-title {
+  font-size: 42px;
+}
+
+.poster-story .faculty-title {
+  font-size: 19px;
+}
+
+.poster-story .poster-title {
+  margin-block: 36px;
+}
+
+.poster-story .folded-arrow {
+  width: 172px;
+}
+
+.poster-story .date-number {
+  font-size: 188px;
+}
+
+.poster-story .event-line {
+  font-size: 31px;
+}
+
+.poster-story .location-copy {
+  font-size: 29px;
+}
+
+.poster-story .poster-details {
+  margin-top: 24px;
+}
+
+/* ---------- masking tape ---------- */
+
+.masking-tape {
+  background-color: #eee6cf;
+  background-image:
+    repeating-linear-gradient(
+      93deg,
+      transparent 0 4px,
+      rgba(84, 68, 37, 0.055) 4px 5px,
+      transparent 5px 10px
+    ),
+    repeating-linear-gradient(
+      3deg,
+      rgba(255, 255, 255, 0.2) 0 1px,
+      transparent 1px 5px
+    ),
+    linear-gradient(90deg, rgba(95, 75, 37, 0.11), transparent 15% 83%, rgba(95, 75, 37, 0.13));
+  box-shadow:
+    inset 0 0 8px rgba(73, 56, 24, 0.1),
+    1px 2px 3px rgba(35, 28, 15, 0.12);
+  filter: saturate(0.72);
+}
+
+.tape-curl {
+  margin-top: 5%;
+  background: linear-gradient(
+    to bottom,
+    rgba(103, 84, 47, 0.55),
+    #c6b997 28%,
+    #eee6cf 62%,
+    rgba(255, 252, 239, 0.95)
+  );
+  box-shadow: 0 4px 5px rgba(43, 34, 17, 0.2);
+}
+
+.tape-roll {
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255, 255, 255, 0.82), transparent 38%),
+    linear-gradient(
+      to bottom,
+      #fffcef 0%,
+      #eee6cf 38%,
+      #c0b38f 72%,
+      #e6dcc1 88%,
+      #fff9e9 100%
+    );
+  border-block: 1px solid rgba(82, 64, 31, 0.18);
+}
+
+.tape-fibres {
+  opacity: 0.62;
+  background-image:
+    repeating-linear-gradient(
+      to top,
+      rgba(62, 49, 25, 0.1) 0 1px,
+      transparent 1px 4px
+    ),
+    repeating-linear-gradient(
+      88deg,
+      transparent 0 6px,
+      rgba(255, 255, 255, 0.3) 6px 7px,
+      transparent 7px 12px
+    );
+}
+
 /* random tumble — each cube gets --rx0..--rz1 + --dur inline */
 @keyframes tumble {
   from { transform: rotateX(var(--rx0)) rotateY(var(--ry0)) rotateZ(var(--rz0)); }

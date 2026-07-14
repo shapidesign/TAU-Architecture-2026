@@ -55,7 +55,14 @@ export default function LetterCube({
     "--rz1": r(6, -6, 14),
   } as React.CSSProperties;
 
-  const glyph = ch === "↑" ? <ArrowGlyph /> : <span className="glyph">{ch}</span>;
+  const glyph =
+    ch === "↑" ? (
+      <ArrowGlyph />
+    ) : (
+      <span className="glyph latin-glyph" lang="en">
+        {ch}
+      </span>
+    );
 
   return (
     <div

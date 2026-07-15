@@ -9,10 +9,14 @@ const OUTLINE: React.CSSProperties = {
   WebkitTextStroke: "1.5px var(--ink)",
 };
 
+// export render modes: false = website, "916" = 1080x1920 story, "45" = 1080x1350 post
+export type StoryMode = false | "916" | "45";
+
 // Admin-controlled scale; fill/outline segmentation follows the printed poster.
-function titleStyle(s: Settings, k: string, story: boolean): React.CSSProperties {
+function titleStyle(s: Settings, k: string, story: StoryMode): React.CSSProperties {
+  const scale = story === "45" ? 1.5 : 2.15;
   return {
-    fontSize: story ? `${Number(s[`${k}_size`]) * 2.15}px` : `min(${s[`${k}_size`]}px, 10.5vw)`,
+    fontSize: story ? `${Number(s[`${k}_size`]) * scale}px` : `min(${s[`${k}_size`]}px, 10.5vw)`,
     fontWeight: Number(s[`${k}_weight`]) || 900,
     lineHeight: Number(s[`${k}_lh`]) || 1.15,
   };
@@ -56,7 +60,7 @@ function ArabicTitle({
 }: {
   filled: string;
   outlined: string;
-  story: boolean;
+  story: StoryMode;
 }) {
   const filterId = `arabic-union-outline-${story ? "story" : "web"}`;
   return (
@@ -154,12 +158,12 @@ export default function PosterScene({
 }: {
   settings: Settings;
   picks: GraduatePick[];
-  story?: boolean;
+  story?: StoryMode;
 }) {
   let cubeIndex = 0;
   const [submissionDate = "9-13.8", submissionLabel = "הגשות פתוחות"] =
     s.opening_time.split(/\s+-\s+/, 2);
-  const cubeSize = story ? "208px" : SIZE;
+  const cubeSize = story === "45" ? "144px" : story ? "208px" : SIZE;
   const cube = (ch: string, offset: string) => {
     const i = cubeIndex++;
     return (
@@ -178,7 +182,7 @@ export default function PosterScene({
     <section
       className={`poster-scene w-full mx-auto px-6 pt-6 overflow-hidden ${
         story ? "poster-story" : ""
-      }`}
+      } ${story === "45" ? "poster-45" : ""}`}
     >
       <div className="poster-top flex justify-between items-start gap-4 mb-8" dir="ltr">
         <div className="w-[48%] pt-1">

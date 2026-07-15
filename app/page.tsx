@@ -11,7 +11,9 @@ export default async function Home({
 }: {
   searchParams: Promise<{ story?: string }>;
 }) {
-  const story = (await searchParams).story === "1";
+  const storyParam = (await searchParams).story;
+  // "1" = 9:16 story (1080x1920), "45" = 4:5 feed post (1080x1350)
+  const story = storyParam === "45" ? "45" : storyParam === "1" ? "916" : false;
   const [settings, graduates] = await Promise.all([getSettings(), getGraduates()]);
 
   // pool of works — each cube picks a random one every time it opens;
@@ -26,9 +28,9 @@ export default async function Home({
 
   if (story) {
     return (
-      <main className="story-stage" dir="ltr">
+      <main className={`story-stage ${story === "45" ? "stage-45" : ""}`} dir="ltr">
         <div className="poster-stage go">
-          <PosterScene settings={settings} picks={picks} story />
+          <PosterScene settings={settings} picks={picks} story={story} />
         </div>
       </main>
     );

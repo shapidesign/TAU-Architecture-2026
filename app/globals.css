@@ -275,6 +275,52 @@ body:has(.poster-story) footer {
   margin-top: -140px;
 }
 
+/* ---------- 4:5 feed post (1080x1350): compact vertical rhythm ---------- */
+
+.poster-45 {
+  height: 1350px;
+  padding: 48px 84px 36px;
+}
+
+.stage-45,
+html:has(.poster-45),
+body:has(.poster-45) {
+  height: 1350px;
+  min-height: 1350px;
+}
+
+.poster-45 .poster-top {
+  margin-bottom: 70px;
+}
+
+.poster-45 .exhibition-title {
+  font-size: 30px;
+}
+
+.poster-45 .faculty-title {
+  font-size: 16px;
+}
+
+.poster-45 .poster-title {
+  margin-block: 22px;
+}
+
+.poster-45 .date-number {
+  font-size: 138px;
+}
+
+.poster-45 .event-line {
+  font-size: 24px;
+}
+
+.poster-45 .location-copy {
+  font-size: 22px;
+}
+
+.poster-45 .poster-details {
+  margin-top: -90px;
+}
+
 /* ---------- masking tape ---------- */
 
 .masking-tape {

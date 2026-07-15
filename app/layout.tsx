@@ -1,13 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Bebas_Neue, Noto_Kufi_Arabic } from "next/font/google";
+import { Noto_Kufi_Arabic } from "next/font/google";
 import { getSettings } from "@/lib/data";
 import "./globals.css";
-
-const bebas = Bebas_Neue({
-  variable: "--font-bebas",
-  subsets: ["latin"],
-  weight: "400",
-});
 
 const arabic = Noto_Kufi_Arabic({
   variable: "--font-arabic",
@@ -34,7 +28,7 @@ export default async function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${arabic.variable} ${bebas.variable} h-full antialiased`}
+      className={`${arabic.variable} h-full antialiased`}
     >
       <body
         className="min-h-dvh flex flex-col"
@@ -42,6 +36,7 @@ export default async function RootLayout({
           {
             "--box": settings.box_color,
             "--bg": settings.bg_color,
+            "--edge": settings.edge_color,
           } as React.CSSProperties
         }
       >

@@ -3,18 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cube, { ArrowGlyph } from "./Cube";
+import { rnd } from "@/lib/rnd";
 
 export type GraduatePick = {
   id: string;
   name_he: string;
   cover: string | null;
 };
-
-// deterministic pseudo-random from seed — safe for SSR hydration
-function rnd(seed: number, i: number): number {
-  const x = Math.sin(seed * 127.1 + i * 311.7) * 43758.5453;
-  return x - Math.floor(x);
-}
 
 /**
  * A tumbling letter cube. Tap 1: lid swings open revealing a random
@@ -36,9 +31,22 @@ export default function LetterCube({
 }) {
   const [pick, setPick] = useState<GraduatePick | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
 
   useEffect(() => () => clearTimeout(timer.current ?? undefined), []);
+
+  // freeze the cube at its current mid-tumble rotation so the lid opens in place
+  const freezeCube = () => {
+    const el = btnRef.current?.querySelector<HTMLElement>(".cube");
+    if (el) el.style.transform = getComputedStyle(el).transform;
+  };
+
+  const close = () => {
+    const el = btnRef.current?.querySelector<HTMLElement>(".cube");
+    if (el) el.style.transform = ""; // resume tumbling
+    setPick(null);
+  };
 
   const r = (i: number, min: number, max: number) =>
     `${Math.round(min + rnd(seed, i) * (max - min))}deg`;
@@ -59,7 +67,7 @@ export default function LetterCube({
     ch === "↑" ? (
       <ArrowGlyph />
     ) : (
-      <span className="glyph latin-glyph" lang="en">
+      <span className="glyph" lang="en">
         {ch}
       </span>
     );
@@ -70,6 +78,7 @@ export default function LetterCube({
       style={{ "--pop-delay": `${(seed % 10) * 0.09}s` } as React.CSSProperties}
     >
       <button
+        ref={btnRef}
         type="button"
         aria-label={
           pick ? `לפרויקט של ${pick.name_he}` : "פתחו את הקופסה לגלות פרויקט"
@@ -81,9 +90,10 @@ export default function LetterCube({
             return;
           }
           if (pool.length === 0) return;
+          freezeCube();
           setPick(pool[Math.floor(Math.random() * pool.length)]);
           // closes by itself, next open reveals a new random graduate
-          timer.current = setTimeout(() => setPick(null), 5000);
+          timer.current = setTimeout(close, 5000);
         }}
         className="block cursor-pointer bg-transparent border-0 p-0"
         style={{ width: size, height: size }}

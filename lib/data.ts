@@ -16,6 +16,8 @@ export const DEFAULT_SETTINGS: Settings = {
   location_he: "בניין דה-בוטון\nאוניברסיטת תל-אביב",
   box_color: "#FDE767",
   bg_color: "#D6D6D6",
+  edge_color: "rgba(255, 255, 255, 0.55)", // cube/arrow face stroke; any CSS color
+
   // logo (uploaded via admin), position is physical left/right
   logo_url: "/logo-horizontal-8.png",
   logo_pos: "left",

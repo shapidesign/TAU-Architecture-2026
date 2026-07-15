@@ -157,6 +157,7 @@ export default function AdminDashboard({
   const [tab, setTab] = useState<(typeof TABS)[number][0]>("invite");
   const [boxColor, setBoxColor] = useState(settings.box_color);
   const [bgColor, setBgColor] = useState(settings.bg_color);
+  const [edgeColor, setEdgeColor] = useState(settings.edge_color);
 
   return (
     <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6">
@@ -469,6 +470,28 @@ export default function AdminDashboard({
                 className="w-16 h-12 border-2 border-[var(--ink)] cursor-pointer"
               />
               <code dir="ltr">{bgColor}</code>
+            </span>
+          </label>
+
+          <label className={label}>
+            צבע קו המתאר של הקופסאות (transparent = ללא קו)
+            <span className="flex items-center gap-3">
+              <input
+                name="edge_color"
+                type="text"
+                dir="ltr"
+                value={edgeColor}
+                onChange={(e) => {
+                  setEdgeColor(e.target.value);
+                  document.body.style.setProperty("--edge", e.target.value);
+                }}
+                className={input}
+              />
+              <span
+                aria-hidden="true"
+                className="w-12 h-12 shrink-0 border-2 border-[var(--ink)]"
+                style={{ background: edgeColor }}
+              />
             </span>
           </label>
 

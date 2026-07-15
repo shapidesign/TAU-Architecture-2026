@@ -1,7 +1,8 @@
 import LetterCube, { GraduatePick } from "./LetterCube";
+import { rnd } from "@/lib/rnd";
 import type { Settings } from "@/lib/types";
 
-const SIZE = "clamp(64px, 21vw, 104px)";
+const SIZE = "var(--poster-cube-size)";
 
 const OUTLINE: React.CSSProperties = {
   color: "transparent",
@@ -48,29 +49,101 @@ function SplitTitle({
   );
 }
 
-function FoldedArrow({ flip = false }: { flip?: boolean }) {
+function ArabicTitle({
+  filled,
+  outlined,
+  story,
+}: {
+  filled: string;
+  outlined: string;
+  story: boolean;
+}) {
+  const filterId = `arabic-union-outline-${story ? "story" : "web"}`;
   return (
-    <svg
+    <>
+      <span className="sr-only">{`${filled} ${outlined}`}</span>
+      <span aria-hidden="true">
+        {filled}{" "}
+        <span className="arabic-outline" style={{ filter: `url(#${filterId})` }}>
+          {outlined}
+        </span>
+      </span>
+      <svg className="absolute size-0" aria-hidden="true">
+        <defs>
+          <filter id={filterId} x="-8%" y="-16%" width="116%" height="132%">
+            <feMorphology
+              in="SourceAlpha"
+              operator="dilate"
+              radius={story ? "3.2" : "1.5"}
+              result="expanded"
+            />
+            <feComposite in="expanded" in2="SourceAlpha" operator="out" result="outline" />
+            <feFlood floodColor="var(--ink)" result="ink" />
+            <feComposite in="ink" in2="outline" operator="in" />
+          </filter>
+        </defs>
+      </svg>
+    </>
+  );
+}
+
+// line-style up-right arrow (stroked shaft + open chevron head, not a
+// solid triangle), same silhouette on every extrusion layer
+const ARROW_PATH = "M12 50 H78 M52 24 L84 50 L52 76";
+const ARROW_FIT = "rotate(-45 50 50)";
+// ponytail: fake extrusion — stacked Z layers instead of real side walls.
+// Holds up at the cube tumble angles (±45°); real walls need a 3D lib.
+const ARROW_LAYERS = 15;
+const ARROW_DEPTH = 0.42; // slab depth as a fraction of --s
+
+/** Extruded 3D arrow living in the cube grid: same tumble + pop-in as cubes. */
+function Arrow3D({ seed, size }: { seed: number; size: string }) {
+  const r = (i: number, min: number, max: number) =>
+    `${Math.round(min + rnd(seed, i) * (max - min))}deg`;
+
+  const style = {
+    "--s": size,
+    "--dur": `${(4 + rnd(seed, 9) * 4).toFixed(1)}s`,
+    "--delay": `-${(rnd(seed, 10) * 4).toFixed(1)}s`,
+    "--rx0": r(1, -32, -6),
+    "--ry0": r(2, 8, 42),
+    "--rz0": r(3, -14, 6),
+    "--rx1": r(4, 6, 34),
+    "--ry1": r(5, -44, -8),
+    "--rz1": r(6, -6, 14),
+  } as React.CSSProperties;
+
+  return (
+    <div
       aria-hidden="true"
-      viewBox="0 0 100 112"
-      className={`folded-arrow ${flip ? "folded-arrow-flip" : ""}`}
+      className="scene3d cube-pop"
+      style={{ "--pop-delay": `${(seed % 10) * 0.09}s` } as React.CSSProperties}
     >
-      <path
-        d="M12 8h55v47h22L49 104 9 55h22V27H12z"
-        fill="var(--box)"
-        stroke="var(--edge)"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M31 27 67 8v47h22L49 104V55H31z"
-        fill="var(--box-side)"
-        stroke="var(--edge)"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="m9 55 40 49V55z" fill="var(--box)" stroke="var(--edge)" strokeWidth="2" />
-    </svg>
+      <div className="cube arrow3d tumble" style={style}>
+        {Array.from({ length: ARROW_LAYERS }, (_, i) => (
+          <svg
+            key={i}
+            viewBox="0 0 100 100"
+            className={`arrow-layer ${
+              i === ARROW_LAYERS - 1 ? "arrow-front" : i === 0 ? "arrow-back" : ""
+            }`}
+            style={{
+              transform: `translateZ(calc(var(--s) * ${(
+                (i / (ARROW_LAYERS - 1) - 0.5) *
+                ARROW_DEPTH
+              ).toFixed(3)}))`,
+            }}
+          >
+            <g transform={ARROW_FIT}>
+              {i === ARROW_LAYERS - 1 && (
+                <path d={ARROW_PATH} className="arrow-edge" />
+              )}
+              <path d={ARROW_PATH} />
+            </g>
+          </svg>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -84,7 +157,9 @@ export default function PosterScene({
   story?: boolean;
 }) {
   let cubeIndex = 0;
-  const cubeSize = story ? "190px" : SIZE;
+  const [submissionDate = "9-13.8", submissionLabel = "הגשות פתוחות"] =
+    s.opening_time.split(/\s+-\s+/, 2);
+  const cubeSize = story ? "208px" : SIZE;
   const cube = (ch: string, offset: string) => {
     const i = cubeIndex++;
     return (
@@ -101,7 +176,7 @@ export default function PosterScene({
 
   return (
     <section
-      className={`poster-scene w-full max-w-md mx-auto px-6 pt-6 overflow-hidden ${
+      className={`poster-scene w-full mx-auto px-6 pt-6 overflow-hidden ${
         story ? "poster-story" : ""
       }`}
     >
@@ -166,32 +241,36 @@ export default function PosterScene({
         dir="rtl"
         style={titleStyle(s, "t_ar", story)}
       >
-        <SplitTitle
+        <ArabicTitle
           filled={s.title_ar.split(" ").slice(0, -1).join(" ")}
           outlined={s.title_ar.split(" ").slice(-1).join(" ")}
+          story={story}
         />
       </h2>
 
-      {/* final N, followed by the two folded arrows from the printed poster */}
+      {/* final N + two 3D arrows: same 3-slot justify-between grid as the
+          cube rows so the arrows align with the center/right cube columns */}
       <div className="poster-final-row flex justify-between items-end mb-3" dir="ltr">
         {ROWS[3].map((ch, i) => cube(ch, OFFSETS[3][i]))}
-        <div className="flex flex-1 justify-end items-end -space-x-3 ms-5">
-          <FoldedArrow />
-          <FoldedArrow flip />
-        </div>
+        <Arrow3D seed={11} size={`calc(${cubeSize} * 1.15)`} />
+        <Arrow3D seed={12} size={`calc(${cubeSize} * 1.15)`} />
       </div>
 
       <div className="poster-details flex justify-between items-end gap-5 mb-4" dir="ltr">
         <p className="location-copy text-left whitespace-pre-line" dir="rtl">
           {s.location_he}
         </p>
-        <div className="date-copy text-right ms-auto" dir="rtl">
+        <div className="date-copy" dir="rtl">
           <p className="date-number font-black tracking-tight" dir="ltr">
             {s.dates}
           </p>
           <p className="event-line">{s.opening_he}</p>
-          <p className="event-line" dir="ltr">
-            {s.opening_time}
+          <p className="event-line bidi-event" dir="ltr" aria-label={s.opening_time}>
+            <span aria-hidden="true">
+              <bdi dir="rtl">{submissionLabel}</bdi>
+              <span> - </span>
+              <bdi dir="ltr">{submissionDate}</bdi>
+            </span>
           </p>
         </div>
       </div>

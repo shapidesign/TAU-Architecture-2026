@@ -9,43 +9,37 @@ type Phase = "tape" | "turning" | "diving" | "hidden";
 // so the intro plays once per refresh, not on every return to the homepage
 let playedThisPageLoad = false;
 
+// each flap carries its half of the cut tape; jagged edge along the cut
+const CUT_EDGE_L =
+  "polygon(0 0, 100% 0, 94% 6%, 100% 13%, 95% 22%, 100% 30%, 94% 41%, 100% 52%, 95% 61%, 100% 70%, 94% 80%, 100% 89%, 96% 100%, 0 100%)";
+const CUT_EDGE_R =
+  "polygon(0 0, 100% 0, 100% 100%, 4% 100%, 0 89%, 6% 80%, 0 70%, 5% 61%, 0 52%, 6% 41%, 0 30%, 5% 22%, 0 13%, 6% 6%)";
+
 /**
- * Intro: a sealed cardboard box. Drag peels the masking tape (progress
- * accumulates — the tape stays where you leave it). Fully peeled, the box
- * turns its opening toward the viewer, the flaps swing open, and the camera
- * flies through the mouth into the grey page. Then the letter cubes appear.
+ * Intro: a sealed cardboard box. Drag cuts the masking tape down its middle
+ * (progress accumulates — the cut stays where you leave it). Fully cut, the
+ * box turns its opening toward the viewer, the flaps swing open carrying
+ * their tape halves, and the camera flies through the mouth into the grey
+ * page. Then the letter cubes appear.
  */
 export default function IntroBox({ onDone }: { onDone?: () => void }) {
   const [phase, setPhase] = useState<Phase>(() =>
     playedThisPageLoad ? "hidden" : "tape"
   );
   const facing = phase !== "tape" && phase !== "hidden"; // mouth toward viewer
-  const peel = useMotionValue(0); // 0..1 accumulated peel progress
+  const cut = useMotionValue(0); // 0..1 accumulated cut progress
   const done = useRef(false);
   const notified = useRef(false);
 
-  // realistic peel: the stuck strip shortens while a roll of tape grows at
-  // the peel front, travels along the seam, and finally rips off
-  const remH = useTransform(peel, (p) => `${Math.max(0, (1 - p) * 100)}%`);
-  const rollH = useTransform(peel, (p) => `${8 + Math.min(p, 1) * 19}%`);
-  const rollTop = useTransform(
-    peel,
-    (p) => `calc(${(1 - p) * 100}% - ${(8 + Math.min(p, 1) * 19) / 2}%)`
-  );
-  const rollSpin = useTransform(peel, (p) => `${p * -110}px`); // surface rolling
-  const rollWobble = useTransform(peel, (p) => Math.sin(p * Math.PI * 5) * 2 - p * 8);
-  const rollShadow = useTransform(
-    peel,
-    (p) =>
-      `${p * -5}px ${3 + p * 14}px ${7 + p * 19}px rgba(29,24,13,${0.16 + p * 0.2})`
-  );
-  const tapeOpacity = useTransform(peel, [0, 1, 1.35], [1, 1, 0]);
-  const curlOpacity = useTransform(peel, [0, 0.08, 1, 1.35], [0, 1, 1, 0]);
-  const tapeStretch = useTransform(peel, (p) => 1 + Math.sin(Math.min(p, 1) * Math.PI) * 0.035);
-  // the box strains a little as the tape is pulled
-  const boxTilt = useTransform(peel, (p) => -p * 3.5);
-  const boxLift = useTransform(peel, (p) => -p * 8);
-  const hintOpacity = useTransform(peel, [0, 0.35], [1, 0]);
+  // a blade leads the cut front; a dark slit grows behind it
+  const cutH = useTransform(cut, (p) => `${Math.min(p, 1) * 100}%`);
+  const bladeWobble = useTransform(cut, (p) => Math.sin(p * Math.PI * 6) * 4);
+  const bladeOpacity = useTransform(cut, [0, 0.04, 1, 1.08], [0, 1, 1, 0]);
+  const tapeOpacity = useTransform(cut, [0, 1, 1.2], [1, 1, 0]);
+  // the box strains a little under the blade
+  const boxTilt = useTransform(cut, (p) => -p * 2);
+  const boxLift = useTransform(cut, (p) => -p * 5);
+  const hintOpacity = useTransform(cut, [0, 0.35], [1, 0]);
 
   useEffect(() => {
     playedThisPageLoad = true;
@@ -69,6 +63,7 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
 
   function finish() {
     document.body.style.overflow = "";
+    window.scrollTo(0, 0);
     setPhase("hidden");
     if (!notified.current) {
       notified.current = true;
@@ -79,7 +74,7 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
   function open() {
     if (done.current) return;
     done.current = true;
-    animate(peel, 1.5, { duration: 0.5, ease: [0.22, 0.65, 0.2, 1] }); // tape rips off
+    animate(cut, 1.2, { duration: 0.4, ease: "easeOut" }); // slit finishes, tape overlay yields to the halves
     setPhase("turning"); // box rotates, mouth to camera, flaps swing open
     setTimeout(() => setPhase("diving"), 1900); // fly through the mouth
   }
@@ -97,14 +92,14 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
       onAnimationComplete={() => phase === "diving" && finish()}
       onPan={(_, info) => {
         if (done.current) return;
-        // accumulate distance — the tape never re-sticks
+        // accumulate distance — the cut never heals
         const next = Math.min(
           1,
-          peel.get() +
+          cut.get() +
             Math.abs(info.delta.x) / 340 +
             Math.abs(info.delta.y) / 620
         );
-        peel.set(next);
+        cut.set(next);
         if (next >= 1) open();
       }}
     >
@@ -141,7 +136,8 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
               style={{ transformStyle: "preserve-3d" }}
             >
               <div className="absolute inset-0 border-2 border-[var(--edge)] bg-[var(--bg)]" />
-              {/* flaps — swing open toward the viewer once the box faces us */}
+              {/* flaps — swing open toward the viewer once the box faces us,
+                  each carrying its half of the cut tape */}
               <motion.div
                 className="absolute top-0 left-0 h-full w-1/2 bg-[var(--box)] border-2 border-[var(--edge)] origin-left"
                 animate={facing ? { rotateY: -150 } : { rotateY: 0 }}
@@ -151,7 +147,12 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
                   damping: 15,
                   delay: 1.0,
                 }}
-              />
+              >
+                <div
+                  className="masking-tape absolute inset-y-[-6%] right-0 w-[28%]"
+                  style={{ clipPath: CUT_EDGE_L }}
+                />
+              </motion.div>
               <motion.div
                 className="absolute top-0 right-0 h-full w-1/2 bg-[var(--box)] border-2 border-[var(--edge)] origin-right"
                 animate={facing ? { rotateY: 150 } : { rotateY: 0 }}
@@ -161,48 +162,40 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
                   damping: 15,
                   delay: 1.15,
                 }}
-              />
-              {/* masking tape over the seam: stuck strip + rolling peel front */}
+              >
+                <div
+                  className="masking-tape absolute inset-y-[-6%] left-0 w-[28%]"
+                  style={{ clipPath: CUT_EDGE_R }}
+                />
+              </motion.div>
+              {/* masking tape over the seam: uncut overlay + growing slit +
+                  blade. When the cut completes the overlay fades, revealing
+                  the identical halves stuck to the flaps beneath */}
               <div className="absolute inset-y-[-6%] left-[36%] w-[28%] pointer-events-none">
-                {/* remaining stuck tape, torn edge at the peel front */}
                 <motion.div
-                  className="masking-tape absolute inset-x-0 top-0"
+                  className="masking-tape absolute inset-0"
                   style={{
-                    height: remH,
-                    scaleY: tapeStretch,
-                    transformOrigin: "top",
+                    opacity: tapeOpacity,
                     clipPath:
                       "polygon(0 2%, 25% 0, 50% 2%, 75% 0, 100% 2%, 100% 98%, 78% 100%, 55% 97.5%, 30% 100%, 0 97.5%)",
                   }}
                 />
-                {/* curled underside catches light before the roll reaches it */}
+                {/* the cut: a dark slit with lifted, light-catching edges */}
                 <motion.div
-                  className="tape-curl absolute inset-x-[-7%] rounded-[50%]"
+                  className="tape-cut absolute left-1/2 top-0 w-[2px]"
+                  style={{ height: cutH, x: "-50%", opacity: tapeOpacity }}
+                />
+                {/* blade leading the cut front */}
+                <motion.div
+                  className="tape-blade absolute left-1/2"
                   style={{
-                    top: rollTop,
-                    height: rollH,
-                    rotate: rollWobble,
-                    opacity: curlOpacity,
+                    top: cutH,
+                    x: "-50%",
+                    y: "-88%",
+                    rotate: bladeWobble,
+                    opacity: bladeOpacity,
                   }}
                 />
-                {/* the roll — grows as it swallows tape, surface spins */}
-                <motion.div
-                  className="tape-roll absolute inset-x-[-18%] rounded-full overflow-hidden"
-                  style={{
-                    top: rollTop,
-                    height: rollH,
-                    rotate: rollWobble,
-                    opacity: tapeOpacity,
-                    boxShadow: rollShadow,
-                  }}
-                >
-                  <motion.div
-                    className="tape-fibres absolute inset-0"
-                    style={{
-                      backgroundPositionY: rollSpin,
-                    }}
-                  />
-                </motion.div>
               </div>
             </div>
           </motion.div>
@@ -221,12 +214,12 @@ export default function IntroBox({ onDone }: { onDone?: () => void }) {
         style={{ opacity: hintOpacity }}
         className="text-center text-lg font-bold leading-relaxed animate-pulse px-8"
       >
-        גררו כדי לקלף את הסרט
+        גררו כדי לחתוך את הסרט
         <span className="block text-base font-normal" lang="ar">
-          اسحبوا لنزع الشريط
+          اسحبوا لقطع الشريط
         </span>
         <span className="block text-base font-normal" dir="ltr" lang="en">
-          Drag to peel the tape
+          Drag to cut the tape
         </span>
       </motion.p>
 

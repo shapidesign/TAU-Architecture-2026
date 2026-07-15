@@ -344,46 +344,22 @@ body:has(.poster-45) {
   filter: saturate(0.72);
 }
 
-.tape-curl {
-  margin-top: 5%;
-  background: linear-gradient(
-    to bottom,
-    rgba(103, 84, 47, 0.55),
-    #c6b997 28%,
-    #eee6cf 62%,
-    rgba(255, 252, 239, 0.95)
-  );
-  box-shadow: 0 4px 5px rgba(43, 34, 17, 0.2);
+/* the slit left by the blade: dark gap, cut edges lift and catch light */
+.tape-cut {
+  background: rgba(43, 34, 17, 0.8);
+  box-shadow:
+    -1.5px 0 0 rgba(255, 253, 240, 0.75),
+    1.5px 0 0 rgba(255, 253, 240, 0.75),
+    0 1px 2px rgba(43, 34, 17, 0.3);
 }
 
-.tape-roll {
-  background:
-    radial-gradient(ellipse at 50% 18%, rgba(255, 255, 255, 0.82), transparent 38%),
-    linear-gradient(
-      to bottom,
-      #fffcef 0%,
-      #eee6cf 38%,
-      #c0b38f 72%,
-      #e6dcc1 88%,
-      #fff9e9 100%
-    );
-  border-block: 1px solid rgba(82, 64, 31, 0.18);
-}
-
-.tape-fibres {
-  opacity: 0.62;
-  background-image:
-    repeating-linear-gradient(
-      to top,
-      rgba(62, 49, 25, 0.1) 0 1px,
-      transparent 1px 4px
-    ),
-    repeating-linear-gradient(
-      88deg,
-      transparent 0 6px,
-      rgba(255, 255, 255, 0.3) 6px 7px,
-      transparent 7px 12px
-    );
+/* box-cutter blade, tip down at the cut front */
+.tape-blade {
+  width: 13px;
+  height: 30px;
+  background: linear-gradient(105deg, #eceef1, #9aa0a8 40%, #f4f6f8 55%, #aab0b8);
+  clip-path: polygon(12% 0, 88% 0, 100% 14%, 100% 68%, 50% 100%, 0 68%, 0 14%);
+  filter: drop-shadow(1px 3px 3px rgba(35, 28, 15, 0.4));
 }
 
 /* random tumble — each cube gets --rx0..--rz1 + --dur inline */

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Kufi_Arabic } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { getSettings } from "@/lib/data";
 import "./globals.css";
 
@@ -51,6 +52,7 @@ export default async function RootLayout({
             עיצוב ופיתוח: יהונתן שפירא
           </a>
         </footer>
+        <Analytics />
       </body>
     </html>
   );

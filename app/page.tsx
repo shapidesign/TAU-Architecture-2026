@@ -3,6 +3,7 @@ import HomeStage from "@/components/HomeStage";
 import PosterScene from "@/components/PosterScene";
 import type { GraduatePick } from "@/components/LetterCube";
 import { getGraduates, getSettings } from "@/lib/data";
+import { parseJson, type Studio } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +18,35 @@ export default async function Home({
   const [settings, graduates] = await Promise.all([getSettings(), getGraduates()]);
 
   // pool of works — each cube picks a random one every time it opens;
-  // prefer graduates that already have images so reveals stay visual
+  // prefer graduates that already have images so reveals stay visual.
+  // fallback when there are no works/media: reveal presentation slots
+  // from the schedule instead.
+  const studios = parseJson<Studio[]>(settings.schedule_json, []);
+  const slot = (st: Studio, p: Studio["presenters"][number]) =>
+    [st.name, st.date, p.time, p.location || st.location]
+      .filter(Boolean)
+      .join(" · ");
+  // ponytail: schedule presenters matched to graduates by exact trimmed name
+  const schedByName = new Map(
+    studios.flatMap((st) => st.presenters.map((p) => [p.name.trim(), slot(st, p)]))
+  );
   const all: GraduatePick[] = graduates.map((g) => ({
     id: g.id,
     name_he: g.name_he,
     cover: g.images[0] ?? null,
+    sched: schedByName.get(g.name_he.trim()),
   }));
   const withCovers = all.filter((p) => p.cover);
-  const picks = withCovers.length > 0 ? withCovers : all;
+  const schedPicks: GraduatePick[] = studios.flatMap((st) =>
+    st.presenters.map((p) => ({
+      id: null,
+      name_he: p.name,
+      cover: null,
+      sched: slot(st, p),
+    }))
+  );
+  const picks =
+    withCovers.length > 0 ? withCovers : schedPicks.length > 0 ? schedPicks : all;
 
   if (story) {
     return (

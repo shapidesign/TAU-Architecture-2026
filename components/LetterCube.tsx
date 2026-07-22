@@ -6,14 +6,16 @@ import Cube, { ArrowGlyph } from "./Cube";
 import { rnd } from "@/lib/rnd";
 
 export type GraduatePick = {
-  id: string;
+  id: string | null; // graduate id, or null for a schedule-only pick
   name_he: string;
   cover: string | null;
+  sched?: string; // presentation slot text, shown when there is no media
 };
 
 /**
  * A tumbling letter cube. Tap 1: lid swings open revealing a random
- * graduate's work (image). Tap 2 within 5s: navigate to that graduate.
+ * graduate's work (image), or their presentation slot if there is no media.
+ * Tap 2 within 5s: navigate to that graduate / the schedule.
  * Otherwise it closes itself and re-randomizes for the next tap.
  */
 export default function LetterCube({
@@ -86,7 +88,7 @@ export default function LetterCube({
         onClick={() => {
           if (pick) {
             clearTimeout(timer.current ?? undefined);
-            router.push(`/graduates/${pick.id}`);
+            router.push(pick.id ? `/graduates/${pick.id}` : "/schedule");
             return;
           }
           if (pool.length === 0) return;
@@ -112,8 +114,18 @@ export default function LetterCube({
                 loading="lazy"
               />
             ) : pick ? (
-              <span className="flex items-center justify-center w-full h-full text-[calc(var(--s)*0.14)] font-bold p-1 text-center">
-                {pick.name_he}
+              <span
+                dir="rtl"
+                className="flex flex-col items-center justify-center gap-0.5 w-full h-full p-1 text-center"
+              >
+                <span className="text-[calc(var(--s)*0.14)] font-bold">
+                  {pick.name_he}
+                </span>
+                {pick.sched && (
+                  <span className="text-[calc(var(--s)*0.1)] leading-tight">
+                    {pick.sched}
+                  </span>
+                )}
               </span>
             ) : null
           }

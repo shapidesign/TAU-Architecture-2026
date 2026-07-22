@@ -2,24 +2,30 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import type { Faculty, Graduate, Settings } from "@/lib/types";
 import {
-  createFaculty,
+  parseJson,
+  type DirectionSpot,
+  type Graduate,
+  type Presenter,
+  type Settings,
+  type Studio,
+} from "@/lib/types";
+import {
   createGraduate,
-  deleteFaculty,
   deleteGraduate,
   logoutAction,
   removeLogo,
+  saveJsonSetting,
   saveLogo,
   saveSettings,
-  updateFaculty,
   updateGraduate,
 } from "../actions";
 
 const TABS = [
   ["invite", "הזמנה"],
   ["grads", "בוגרים.ות"],
-  ["faculty", "סגל"],
+  ["schedule", "מועדי הגשות"],
+  ["directions", "דרכי הגעה"],
   ["theme", "צבעים"],
 ] as const;
 
@@ -145,14 +151,218 @@ function GraduateFields({ g }: { g?: Graduate }) {
   );
 }
 
+const EMPTY_PRESENTER: Presenter = { name: "", time: "", location: "" };
+const EMPTY_STUDIO: Studio = { name: "", date: "", location: "", presenters: [] };
+const EMPTY_SPOT: DirectionSpot = { name: "", note: "", maps_url: "", waze_url: "" };
+
+const smallBtn =
+  "border-2 border-[var(--ink)] bg-[var(--box)] px-3 py-1.5 text-sm font-bold cursor-pointer min-h-9";
+const delBtn =
+  "text-red-700 text-sm underline underline-offset-4 cursor-pointer min-h-9";
+
+function ScheduleEditor({ initial }: { initial: Studio[] }) {
+  const [studios, setStudios] = useState<Studio[]>(initial);
+
+  const setStudio = (i: number, patch: Partial<Studio>) =>
+    setStudios((s) => s.map((st, j) => (j === i ? { ...st, ...patch } : st)));
+  const setPresenter = (i: number, p: number, patch: Partial<Presenter>) =>
+    setStudio(i, {
+      presenters: studios[i].presenters.map((pr, j) =>
+        j === p ? { ...pr, ...patch } : pr
+      ),
+    });
+
+  return (
+    <form action={saveJsonSetting} className="flex flex-col gap-6">
+      <input type="hidden" name="key" value="schedule_json" />
+      <input type="hidden" name="value" value={JSON.stringify(studios)} />
+
+      {studios.map((st, i) => (
+        <fieldset key={i} className="border-2 border-[var(--ink)] p-4 bg-[var(--box)]/40 flex flex-col gap-3">
+          <div className="grid sm:grid-cols-3 gap-3">
+            <label className={label}>
+              שם הסטודיו
+              <input
+                value={st.name}
+                onChange={(e) => setStudio(i, { name: e.target.value })}
+                className={input}
+              />
+            </label>
+            <label className={label}>
+              תאריך
+              <input
+                value={st.date}
+                onChange={(e) => setStudio(i, { date: e.target.value })}
+                placeholder="10.8"
+                className={input}
+              />
+            </label>
+            <label className={label}>
+              מיקום
+              <input
+                value={st.location}
+                onChange={(e) => setStudio(i, { location: e.target.value })}
+                className={input}
+              />
+            </label>
+          </div>
+
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="text-right">
+                <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)]">שם הבוגר.ת</th>
+                <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-28">שעה</th>
+                <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)]">מיקום</th>
+                <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-16" />
+              </tr>
+            </thead>
+            <tbody>
+              {st.presenters.map((pr, p) => (
+                <tr key={p}>
+                  {(["name", "time", "location"] as const).map((f) => (
+                    <td key={f} className="border-2 border-[var(--ink)] p-0">
+                      <input
+                        value={pr[f]}
+                        onChange={(e) => setPresenter(i, p, { [f]: e.target.value })}
+                        className="w-full px-2 py-1.5 bg-white"
+                      />
+                    </td>
+                  ))}
+                  <td className="border-2 border-[var(--ink)] text-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setStudio(i, {
+                          presenters: st.presenters.filter((_, j) => j !== p),
+                        })
+                      }
+                      className={delBtn}
+                    >
+                      הסרה
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="flex gap-4 items-center">
+            <button
+              type="button"
+              onClick={() =>
+                setStudio(i, { presenters: [...st.presenters, { ...EMPTY_PRESENTER }] })
+              }
+              className={smallBtn}
+            >
+              + הוספת מגיש.ה
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm(`למחוק את הסטודיו "${st.name}"?`))
+                  setStudios((s) => s.filter((_, j) => j !== i));
+              }}
+              className={delBtn}
+            >
+              מחיקת סטודיו
+            </button>
+          </div>
+        </fieldset>
+      ))}
+
+      <div className="flex gap-4 items-center">
+        <button
+          type="button"
+          onClick={() => setStudios((s) => [...s, { ...EMPTY_STUDIO }])}
+          className={smallBtn}
+        >
+          + הוספת סטודיו
+        </button>
+        <Save />
+      </div>
+    </form>
+  );
+}
+
+function DirectionsEditor({ initial }: { initial: DirectionSpot[] }) {
+  const [spots, setSpots] = useState<DirectionSpot[]>(initial);
+  const setSpot = (i: number, patch: Partial<DirectionSpot>) =>
+    setSpots((s) => s.map((sp, j) => (j === i ? { ...sp, ...patch } : sp)));
+
+  return (
+    <form action={saveJsonSetting} className="flex flex-col gap-4">
+      <input type="hidden" name="key" value="directions_json" />
+      <input type="hidden" name="value" value={JSON.stringify(spots)} />
+
+      {spots.map((sp, i) => (
+        <fieldset key={i} className="border-2 border-[var(--ink)] p-4 bg-[var(--box)]/40 grid sm:grid-cols-2 gap-3">
+          <label className={label}>
+            שם המיקום (למשל: חניון, כניסה ראשית)
+            <input
+              value={sp.name}
+              onChange={(e) => setSpot(i, { name: e.target.value })}
+              className={input}
+            />
+          </label>
+          <label className={label}>
+            הערה (חופשי)
+            <input
+              value={sp.note}
+              onChange={(e) => setSpot(i, { note: e.target.value })}
+              className={input}
+            />
+          </label>
+          <label className={label}>
+            קישור Google Maps
+            <input
+              value={sp.maps_url}
+              onChange={(e) => setSpot(i, { maps_url: e.target.value })}
+              dir="ltr"
+              className={input}
+            />
+          </label>
+          <label className={label}>
+            קישור Waze
+            <input
+              value={sp.waze_url}
+              onChange={(e) => setSpot(i, { waze_url: e.target.value })}
+              dir="ltr"
+              className={input}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`למחוק את "${sp.name}"?`))
+                setSpots((s) => s.filter((_, j) => j !== i));
+            }}
+            className={`${delBtn} justify-self-start`}
+          >
+            מחיקה
+          </button>
+        </fieldset>
+      ))}
+
+      <div className="flex gap-4 items-center">
+        <button
+          type="button"
+          onClick={() => setSpots((s) => [...s, { ...EMPTY_SPOT }])}
+          className={smallBtn}
+        >
+          + הוספת מיקום
+        </button>
+        <Save />
+      </div>
+    </form>
+  );
+}
+
 export default function AdminDashboard({
   settings,
   graduates,
-  faculty,
 }: {
   settings: Settings;
   graduates: Graduate[];
-  faculty: Faculty[];
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>("invite");
   const [boxColor, setBoxColor] = useState(settings.box_color);
@@ -372,69 +582,16 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {tab === "faculty" && (
-        <div className="flex flex-col gap-4">
-          <form
-            action={createFaculty}
-            className="border-2 border-dashed border-[var(--ink)] p-4 bg-white/40 grid sm:grid-cols-4 gap-3 items-end"
-          >
-            <label className={label}>
-              שם — עברית
-              <input name="name_he" required className={input} />
-            </label>
-            <label className={label}>
-              שם — English
-              <input name="name_en" dir="ltr" className={input} />
-            </label>
-            <label className={label}>
-              תפקיד
-              <input name="role" className={input} />
-            </label>
-            <Save label="+ הוספה" />
-          </form>
+      {tab === "schedule" && (
+        <ScheduleEditor
+          initial={parseJson<Studio[]>(settings.schedule_json, [])}
+        />
+      )}
 
-          {faculty.map((f, i) => (
-            <div key={f.id} className="border-2 border-[var(--ink)] p-4 bg-[var(--box)]/40">
-              <form action={updateFaculty} className="grid sm:grid-cols-5 gap-3 items-end">
-                <input type="hidden" name="id" value={f.id} />
-                <label className={label}>
-                  שם — עברית
-                  <input name="name_he" defaultValue={f.name_he} className={input} />
-                </label>
-                <label className={label}>
-                  שם — English
-                  <input name="name_en" defaultValue={f.name_en} dir="ltr" className={input} />
-                </label>
-                <label className={label}>
-                  תפקיד
-                  <input name="role" defaultValue={f.role} className={input} />
-                </label>
-                <label className={label}>
-                  סדר
-                  <input
-                    name="sort_order"
-                    type="number"
-                    defaultValue={f.sort_order || i}
-                    className={input}
-                  />
-                </label>
-                <Save />
-              </form>
-              <form
-                action={deleteFaculty}
-                onSubmit={(e) => {
-                  if (!confirm(`למחוק את ${f.name_he}?`)) e.preventDefault();
-                }}
-                className="mt-2"
-              >
-                <input type="hidden" name="id" value={f.id} />
-                <button className="text-red-700 text-sm underline underline-offset-4 cursor-pointer min-h-11">
-                  מחיקה
-                </button>
-              </form>
-            </div>
-          ))}
-        </div>
+      {tab === "directions" && (
+        <DirectionsEditor
+          initial={parseJson<DirectionSpot[]>(settings.directions_json, [])}
+        />
       )}
 
       {tab === "theme" && (

@@ -72,6 +72,20 @@ export async function removeLogo(): Promise<void> {
   refresh();
 }
 
+// Saves a whole JSON blob (schedule / directions) into the settings table.
+export async function saveJsonSetting(fd: FormData): Promise<void> {
+  await assertAdmin();
+  const key = String(fd.get("key"));
+  if (key !== "schedule_json" && key !== "directions_json") {
+    throw new Error("unknown key");
+  }
+  const value = String(fd.get("value") ?? "[]");
+  JSON.parse(value); // validate before writing
+  const { error } = await sb().from("settings").upsert([{ key, value }]);
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
 async function uploadImages(gradId: string, files: File[]): Promise<string[]> {
   const urls: string[] = [];
   for (const file of files) {
@@ -137,43 +151,6 @@ export async function deleteGraduate(fd: FormData): Promise<void> {
   await assertAdmin();
   const { error } = await sb()
     .from("graduates")
-    .delete()
-    .eq("id", String(fd.get("id")));
-  if (error) throw new Error(error.message);
-  refresh();
-}
-
-export async function createFaculty(fd: FormData): Promise<void> {
-  await assertAdmin();
-  const { error } = await sb().from("faculty").insert({
-    name_he: String(fd.get("name_he") ?? ""),
-    name_en: String(fd.get("name_en") ?? ""),
-    role: String(fd.get("role") ?? ""),
-    sort_order: Number(fd.get("sort_order") ?? 0) || 0,
-  });
-  if (error) throw new Error(error.message);
-  refresh();
-}
-
-export async function updateFaculty(fd: FormData): Promise<void> {
-  await assertAdmin();
-  const { error } = await sb()
-    .from("faculty")
-    .update({
-      name_he: String(fd.get("name_he") ?? ""),
-      name_en: String(fd.get("name_en") ?? ""),
-      role: String(fd.get("role") ?? ""),
-      sort_order: Number(fd.get("sort_order") ?? 0) || 0,
-    })
-    .eq("id", String(fd.get("id")));
-  if (error) throw new Error(error.message);
-  refresh();
-}
-
-export async function deleteFaculty(fd: FormData): Promise<void> {
-  await assertAdmin();
-  const { error } = await sb()
-    .from("faculty")
     .delete()
     .eq("id", String(fd.get("id")));
   if (error) throw new Error(error.message);

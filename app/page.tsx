@@ -44,16 +44,16 @@ export default async function Home({
         {/* main navigation */}
         <nav className="w-full max-w-md mx-auto px-6 py-10 flex flex-col gap-6">
           <Link
-            href="/graduates"
+            href="/schedule"
             className="block bg-[var(--box)] text-center py-7 px-4 text-xl font-black border-2 border-[var(--ink)] shadow-[6px_6px_0_var(--ink)] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0_var(--ink)] transition-transform"
           >
-            בוגרים.ות · <span lang="ar">الخريجون</span> · Graduates
+            מועדי הגשות · <span lang="ar">مواعيد العروض</span> · Presentations
           </Link>
           <Link
-            href="/faculty"
+            href="/directions"
             className="block bg-[var(--box)] text-center py-7 px-4 text-xl font-black border-2 border-[var(--ink)] shadow-[6px_6px_0_var(--ink)] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0_var(--ink)] transition-transform"
           >
-            סגל אקדמי · <span lang="ar">الطاقم الأكاديمي</span> · Academic Faculty
+            דרכי הגעה וחניה · <span lang="ar">الوصول</span> · Getting Here
           </Link>
         </nav>
       </HomeStage>

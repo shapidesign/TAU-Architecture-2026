@@ -1,5 +1,5 @@
 import { sb } from "./supabase";
-import type { Faculty, Graduate, Settings } from "./types";
+import type { Graduate, Settings } from "./types";
 
 // Poster defaults — the site renders even before/without the database.
 export const DEFAULT_SETTINGS: Settings = {
@@ -35,6 +35,11 @@ export const DEFAULT_SETTINGS: Settings = {
   t_ar_weight: "700",
   t_ar_lh: "1.4",
   t_ar_style: "outline",
+
+  // JSON blobs edited in admin — ponytail: stored in settings key/value
+  // instead of dedicated tables; fine for a single exhibition's worth of data
+  schedule_json: "[]", // Studio[]
+  directions_json: "[]", // DirectionSpot[]
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -68,18 +73,5 @@ export async function getGraduate(id: string): Promise<Graduate | null> {
     return data;
   } catch {
     return null;
-  }
-}
-
-export async function getFaculty(): Promise<Faculty[]> {
-  try {
-    const { data } = await sb()
-      .from("faculty")
-      .select("*")
-      .order("sort_order")
-      .order("name_he");
-    return data ?? [];
-  } catch {
-    return [];
   }
 }

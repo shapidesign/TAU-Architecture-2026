@@ -50,13 +50,13 @@ export default async function SchedulePage() {
               <tbody>
                 {st.presenters.map((p, j) => (
                   <tr key={j}>
-                    <td className="border-2 border-[var(--ink)] px-4 py-2.5 font-bold">
+                    <td className="border-2 border-[var(--ink)] px-4 py-2.5 font-bold text-right">
                       {p.name}
                     </td>
-                    <td className="border-2 border-[var(--ink)] px-4 py-2.5" dir="ltr">
+                    <td className="border-2 border-[var(--ink)] px-4 py-2.5 text-right" dir="ltr">
                       {p.time}
                     </td>
-                    <td className="border-2 border-[var(--ink)] px-4 py-2.5">
+                    <td className="border-2 border-[var(--ink)] px-4 py-2.5 text-right">
                       {p.location}
                     </td>
                   </tr>

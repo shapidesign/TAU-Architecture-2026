@@ -224,7 +224,7 @@ function ScheduleEditor({ initial }: { initial: Studio[] }) {
                       <input
                         value={pr[f]}
                         onChange={(e) => setPresenter(i, p, { [f]: e.target.value })}
-                        className="w-full px-2 py-1.5 bg-white"
+                        className="w-full px-2 py-1.5 bg-white text-right"
                       />
                     </td>
                   ))}

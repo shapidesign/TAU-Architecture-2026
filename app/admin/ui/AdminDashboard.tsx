@@ -151,7 +151,7 @@ function GraduateFields({ g }: { g?: Graduate }) {
   );
 }
 
-const EMPTY_PRESENTER: Presenter = { name: "", time: "", location: "" };
+const EMPTY_PRESENTER: Presenter = { name: "", time: "" };
 const EMPTY_STUDIO: Studio = { name: "", date: "", location: "", presenters: [] };
 const EMPTY_SPOT: DirectionSpot = { name: "", note: "", maps_url: "", waze_url: "" };
 
@@ -212,14 +212,13 @@ function ScheduleEditor({ initial }: { initial: Studio[] }) {
               <tr className="text-right">
                 <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)]">שם הבוגר.ת</th>
                 <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-28">שעה</th>
-                <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)]">מיקום</th>
                 <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-16" />
               </tr>
             </thead>
             <tbody>
               {st.presenters.map((pr, p) => (
                 <tr key={p}>
-                  {(["name", "time", "location"] as const).map((f) => (
+                  {(["name", "time"] as const).map((f) => (
                     <td key={f} className="border-2 border-[var(--ink)] p-0">
                       <input
                         value={pr[f]}

@@ -42,9 +42,6 @@ export default async function SchedulePage() {
                   <th className="border-2 border-[var(--ink)] px-4 py-2.5 bg-[var(--box)] w-28">
                     שעה
                   </th>
-                  <th className="border-2 border-[var(--ink)] px-4 py-2.5 bg-[var(--box)]">
-                    מיקום
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -55,9 +52,6 @@ export default async function SchedulePage() {
                     </td>
                     <td className="border-2 border-[var(--ink)] px-4 py-2.5 text-right" dir="ltr">
                       {p.time}
-                    </td>
-                    <td className="border-2 border-[var(--ink)] px-4 py-2.5 text-right">
-                      {p.location}
                     </td>
                   </tr>
                 ))}

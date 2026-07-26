@@ -23,9 +23,7 @@ export default async function Home({
   // from the schedule instead.
   const studios = parseJson<Studio[]>(settings.schedule_json, []);
   const slot = (st: Studio, p: Studio["presenters"][number]) =>
-    [st.name, st.date, p.time, p.location || st.location]
-      .filter(Boolean)
-      .join(" · ");
+    [st.name, st.date, p.time].filter(Boolean).join(" · ");
   // ponytail: schedule presenters matched to graduates by exact trimmed name
   const schedByName = new Map(
     studios.flatMap((st) => st.presenters.map((p) => [p.name.trim(), slot(st, p)]))

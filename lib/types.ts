@@ -12,7 +12,7 @@ export type Graduate = {
 };
 
 // Presentation schedule (מועדי הגשות) — stored as JSON in settings.schedule_json
-export type Presenter = { name: string; time: string; location: string };
+export type Presenter = { name: string; time: string };
 export type Studio = {
   name: string;
   date: string;

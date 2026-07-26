@@ -582,9 +582,59 @@ export default function AdminDashboard({
       )}
 
       {tab === "schedule" && (
-        <ScheduleEditor
-          initial={parseJson<Studio[]>(settings.schedule_json, [])}
-        />
+        <div className="flex flex-col gap-8">
+          <form
+            action={saveSettings}
+            className="border-2 border-[var(--ink)] p-4 bg-white/40 flex flex-col gap-4"
+          >
+            <h2 className="text-lg font-black">מראה הטבלה</h2>
+            <label className={label}>
+              רוחב הטבלה (px)
+              <input
+                name="sched_width"
+                type="number"
+                min={320}
+                max={1400}
+                step={10}
+                defaultValue={settings.sched_width}
+                className={input}
+              />
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {(
+                [
+                  ["sched_header_bg", "כותרת סטודיו — רקע"],
+                  ["sched_header_fg", "כותרת סטודיו — טקסט"],
+                  ["sched_th_bg", "שורת כותרות — רקע"],
+                  ["sched_row_bg", "שורות — רקע"],
+                  ["sched_border", "צבע מסגרת"],
+                ] as const
+              ).map(([key, name]) => (
+                <label key={key} className={label}>
+                  {name}
+                  <span className="flex items-center gap-2">
+                    <input
+                      name={key}
+                      type="color"
+                      defaultValue={settings[key]}
+                      className="w-12 h-10 border-2 border-[var(--ink)] cursor-pointer"
+                    />
+                    <code dir="ltr" className="text-xs opacity-70">
+                      {settings[key]}
+                    </code>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div>
+              <Save label="שמירת מראה" />
+            </div>
+          </form>
+
+          <ScheduleEditor
+            initial={parseJson<Studio[]>(settings.schedule_json, [])}
+          />
+        </div>
       )}
 
       {tab === "directions" && (

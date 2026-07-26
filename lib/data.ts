@@ -40,6 +40,14 @@ export const DEFAULT_SETTINGS: Settings = {
   // instead of dedicated tables; fine for a single exhibition's worth of data
   schedule_json: "[]", // Studio[]
   directions_json: "[]", // DirectionSpot[]
+
+  // מועדי הגשות table look
+  sched_width: "768", // max-width px
+  sched_header_bg: "#111111",
+  sched_header_fg: "#FDE767",
+  sched_th_bg: "#FDE767",
+  sched_row_bg: "#FEF6B8",
+  sched_border: "#111111",
 };
 
 export async function getSettings(): Promise<Settings> {

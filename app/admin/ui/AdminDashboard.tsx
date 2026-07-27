@@ -160,6 +160,44 @@ const smallBtn =
 const delBtn =
   "text-red-700 text-sm underline underline-offset-4 cursor-pointer min-h-9";
 
+function moveItem<T>(arr: T[], from: number, to: number): T[] {
+  if (from === to || to < 0 || to >= arr.length) return arr;
+  const next = [...arr];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
+function OrderSelect({
+  index,
+  total,
+  onMove,
+  label = "סדר",
+}: {
+  index: number;
+  total: number;
+  onMove: (to: number) => void;
+  label?: string;
+}) {
+  return (
+    <label className="inline-flex items-center gap-1.5 text-sm font-bold">
+      {label}
+      <select
+        value={index}
+        onChange={(e) => onMove(Number(e.target.value))}
+        className="border-2 border-[var(--ink)] bg-white px-2 py-1.5 text-sm min-h-9"
+        aria-label={label}
+      >
+        {Array.from({ length: total }, (_, n) => (
+          <option key={n} value={n}>
+            {n + 1}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function ScheduleEditor({ initial }: { initial: Studio[] }) {
   const [studios, setStudios] = useState<Studio[]>(initial);
 
@@ -179,6 +217,15 @@ function ScheduleEditor({ initial }: { initial: Studio[] }) {
 
       {studios.map((st, i) => (
         <fieldset key={i} className="border-2 border-[var(--ink)] p-4 bg-[var(--box)]/40 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <OrderSelect
+              index={i}
+              total={studios.length}
+              onMove={(to) => setStudios((s) => moveItem(s, i, to))}
+              label="סדר סטודיו"
+            />
+            <span className="text-sm opacity-60">#{i + 1} מתוך {studios.length}</span>
+          </div>
           <div className="grid sm:grid-cols-3 gap-3">
             <label className={label}>
               שם הסטודיו
@@ -210,6 +257,7 @@ function ScheduleEditor({ initial }: { initial: Studio[] }) {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="text-right">
+                <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-20">סדר</th>
                 <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)]">שם הבוגר.ת</th>
                 <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-28">שעה</th>
                 <th className="border-2 border-[var(--ink)] px-2 py-1.5 bg-[var(--box)] w-16" />
@@ -218,6 +266,24 @@ function ScheduleEditor({ initial }: { initial: Studio[] }) {
             <tbody>
               {st.presenters.map((pr, p) => (
                 <tr key={p}>
+                  <td className="border-2 border-[var(--ink)] px-1 py-1 text-center">
+                    <select
+                      value={p}
+                      onChange={(e) =>
+                        setStudio(i, {
+                          presenters: moveItem(st.presenters, p, Number(e.target.value)),
+                        })
+                      }
+                      className="border border-[var(--ink)] bg-white px-1 py-1 text-sm"
+                      aria-label="סדר מגיש"
+                    >
+                      {st.presenters.map((_, n) => (
+                        <option key={n} value={n}>
+                          {n + 1}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   {(["name", "time"] as const).map((f) => (
                     <td key={f} className="border-2 border-[var(--ink)] p-0">
                       <input

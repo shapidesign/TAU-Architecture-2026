@@ -1,5 +1,5 @@
 import { sb } from "./supabase";
-import type { Graduate, Settings } from "./types";
+import { DEFAULT_BUILDING_MAP, type Graduate, type Settings } from "./types";
 
 // Poster defaults — the site renders even before/without the database.
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   // instead of dedicated tables; fine for a single exhibition's worth of data
   schedule_json: "[]", // Studio[]
   directions_json: "[]", // DirectionSpot[]
+  building_map_json: JSON.stringify(DEFAULT_BUILDING_MAP),
 
   // מועדי הגשות table look
   sched_width: "768", // max-width px

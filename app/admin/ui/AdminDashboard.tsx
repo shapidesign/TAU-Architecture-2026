@@ -4,12 +4,15 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   parseJson,
+  DEFAULT_BUILDING_MAP,
+  type BuildingMap,
   type DirectionSpot,
   type Graduate,
   type Presenter,
   type Settings,
   type Studio,
 } from "@/lib/types";
+import BuildingModel from "@/components/BuildingModel";
 import {
   createGraduate,
   deleteGraduate,
@@ -26,6 +29,7 @@ const TABS = [
   ["grads", "בוגרים.ות"],
   ["schedule", "מועדי הגשות"],
   ["directions", "דרכי הגעה"],
+  ["map", "מפה"],
   ["theme", "צבעים"],
 ] as const;
 
@@ -422,6 +426,164 @@ function DirectionsEditor({ initial }: { initial: DirectionSpot[] }) {
   );
 }
 
+type PinId =
+  | `room-${string}`
+  | "entrance"
+  | "bar"
+  | "wc"
+  | "tree-west"
+  | "tree-east";
+
+function pinLabel(id: PinId): string {
+  if (id.startsWith("room-")) return `חדר ${id.slice(5)}`;
+  if (id === "entrance") return "כניסה";
+  if (id === "bar") return "בר / כוס יין";
+  if (id === "wc") return "שירותים";
+  if (id === "tree-west") return "עץ מערב";
+  if (id === "tree-east") return "עץ מזרח";
+  return id;
+}
+
+function getPinXY(map: BuildingMap, id: PinId): { x: number; y: number } {
+  if (id.startsWith("room-")) {
+    const num = id.slice(5);
+    return map.rooms.find((r) => r.num === num) ?? { x: 0, y: 0 };
+  }
+  if (id === "entrance") return map.entrance;
+  if (id === "bar") return map.bar;
+  if (id === "wc") return map.wc;
+  const tree = map.trees.find((t) => t.id === id);
+  return tree ?? { x: 0, y: 0 };
+}
+
+function setPinXY(map: BuildingMap, id: PinId, x: number, y: number): BuildingMap {
+  if (id.startsWith("room-")) {
+    const num = id.slice(5);
+    return {
+      ...map,
+      rooms: map.rooms.map((r) => (r.num === num ? { ...r, x, y } : r)),
+    };
+  }
+  if (id === "entrance") return { ...map, entrance: { x, y } };
+  if (id === "bar") return { ...map, bar: { x, y } };
+  if (id === "wc") return { ...map, wc: { x, y } };
+  return {
+    ...map,
+    trees: map.trees.map((t) => (t.id === id ? { ...t, x, y } : t)),
+  };
+}
+
+function BuildingMapEditor({ initial }: { initial: BuildingMap }) {
+  const [map, setMap] = useState<BuildingMap>({
+    ...DEFAULT_BUILDING_MAP,
+    ...initial,
+    rooms: initial.rooms?.length ? initial.rooms : DEFAULT_BUILDING_MAP.rooms,
+    trees: initial.trees?.length ? initial.trees : DEFAULT_BUILDING_MAP.trees,
+  });
+  const pinIds: PinId[] = [
+    ...map.rooms.map((r) => `room-${r.num}` as PinId),
+    "entrance",
+    "bar",
+    "wc",
+    ...(map.trees.map((t) => t.id as PinId)),
+  ];
+  const [selectedId, setSelectedId] = useState<PinId>(pinIds[0] ?? "entrance");
+  const xy = getPinXY(map, selectedId);
+
+  return (
+    <form action={saveJsonSetting} className="flex flex-col gap-6">
+      <input type="hidden" name="key" value="building_map_json" />
+      <input type="hidden" name="value" value={JSON.stringify(map)} />
+
+      <div className="grid sm:grid-cols-2 gap-4 max-w-md">
+        <label className={label}>
+          צבע רקע תוויות
+          <span className="flex items-center gap-3">
+            <input
+              type="color"
+              value={map.chip_bg}
+              onChange={(e) => setMap((m) => ({ ...m, chip_bg: e.target.value }))}
+              className="w-16 h-12 border-2 border-[var(--ink)] cursor-pointer"
+            />
+            <code dir="ltr">{map.chip_bg}</code>
+          </span>
+        </label>
+        <label className={label}>
+          צבע טקסט תוויות
+          <span className="flex items-center gap-3">
+            <input
+              type="color"
+              value={map.chip_fg}
+              onChange={(e) => setMap((m) => ({ ...m, chip_fg: e.target.value }))}
+              className="w-16 h-12 border-2 border-[var(--ink)] cursor-pointer"
+            />
+            <code dir="ltr">{map.chip_fg}</code>
+          </span>
+        </label>
+      </div>
+
+      <div className="grid sm:grid-cols-[14rem_1fr] gap-4">
+        <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto border-2 border-[var(--ink)] p-2">
+          {pinIds.map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setSelectedId(id)}
+              className={`text-right px-3 py-2 font-bold text-sm border-2 border-[var(--ink)] cursor-pointer min-h-11 ${
+                selectedId === id
+                  ? "bg-[var(--ink)] text-[var(--box)]"
+                  : "bg-white"
+              }`}
+            >
+              {pinLabel(id)}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3 max-w-xs">
+            <label className={label}>
+              X
+              <input
+                type="number"
+                dir="ltr"
+                value={xy.x}
+                onChange={(e) =>
+                  setMap((m) => setPinXY(m, selectedId, Number(e.target.value), xy.y))
+                }
+                className={input}
+              />
+            </label>
+            <label className={label}>
+              Y
+              <input
+                type="number"
+                dir="ltr"
+                value={xy.y}
+                onChange={(e) =>
+                  setMap((m) => setPinXY(m, selectedId, xy.x, Number(e.target.value)))
+                }
+                className={input}
+              />
+            </label>
+          </div>
+          <BuildingModel
+            map={map}
+            selectedId={selectedId}
+            onPlace={(id, x, y) =>
+              setMap((m) => setPinXY(m, id as PinId, x, y))
+            }
+          />
+        </div>
+      </div>
+
+      <div>
+        <Save label="שמירת מפה" />
+      </div>
+    </form>
+  );
+}
+
 export default function AdminDashboard({
   settings,
   graduates,
@@ -435,7 +597,7 @@ export default function AdminDashboard({
   const [edgeColor, setEdgeColor] = useState(settings.edge_color);
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6">
+    <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black">ניהול התערוכה</h1>
         <form action={logoutAction}>
@@ -706,6 +868,15 @@ export default function AdminDashboard({
       {tab === "directions" && (
         <DirectionsEditor
           initial={parseJson<DirectionSpot[]>(settings.directions_json, [])}
+        />
+      )}
+
+      {tab === "map" && (
+        <BuildingMapEditor
+          initial={parseJson<BuildingMap>(
+            settings.building_map_json,
+            DEFAULT_BUILDING_MAP,
+          )}
         />
       )}
 

@@ -76,7 +76,11 @@ export async function removeLogo(): Promise<void> {
 export async function saveJsonSetting(fd: FormData): Promise<void> {
   await assertAdmin();
   const key = String(fd.get("key"));
-  if (key !== "schedule_json" && key !== "directions_json") {
+  if (
+    key !== "schedule_json" &&
+    key !== "directions_json" &&
+    key !== "building_map_json"
+  ) {
     throw new Error("unknown key");
   }
   const value = String(fd.get("value") ?? "[]");

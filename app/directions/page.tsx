@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSettings } from "@/lib/data";
-import { parseJson, type DirectionSpot } from "@/lib/types";
+import { parseJson, type BuildingMap, type DirectionSpot, type Studio, DEFAULT_BUILDING_MAP } from "@/lib/types";
+import BuildingModel from "@/components/BuildingModel";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ const btn =
 export default async function DirectionsPage() {
   const settings = await getSettings();
   const spots = parseJson<DirectionSpot[]>(settings.directions_json, []);
+  const studios = parseJson<Studio[]>(settings.schedule_json, []);
+  const map = parseJson<BuildingMap>(settings.building_map_json, DEFAULT_BUILDING_MAP);
 
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-6 py-8">
@@ -21,6 +24,13 @@ export default async function DirectionsPage() {
       <h1 className="text-3xl font-black my-6 text-center">
         דרכי הגעה וחניה · <span lang="ar">الوصول</span> · Getting Here
       </h1>
+
+      <section className="mb-8">
+        <BuildingModel studios={studios} map={map} />
+        <p className="text-xs opacity-60 mt-2 text-center">
+          מודל תלת־ממדי של הבניין · גררו לסיבוב, גלגלו לזום
+        </p>
+      </section>
 
       {spots.length === 0 && (
         <p className="text-center opacity-60 py-12">הפרטים יעלו בקרוב · Coming soon</p>

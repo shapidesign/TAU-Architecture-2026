@@ -136,7 +136,7 @@ function roomLabelElement(
   return el;
 }
 
-type PinObj = THREE.Object3D & { userData: { pinId: string; kind: string } };
+type PinObj = THREE.Object3D;
 
 function applyMapPositions(pins: Record<string, PinObj>, map: BuildingMap) {
   for (const room of map.rooms) {
@@ -161,18 +161,19 @@ function applyChipColors(pins: Record<string, PinObj>, map: BuildingMap, selecte
     el.style.outline = selected ? "3px solid #111" : "";
     el.style.outlineOffset = selected ? "2px" : "";
   };
+  const labelEl = (o: PinObj | undefined) =>
+    o && "element" in o ? (o as unknown as CSS2DObject).element : undefined;
   for (const room of map.rooms) {
-    const o = pins[`room-${room.num}`] as CSS2DObject | undefined;
-    const chip = o?.element?.querySelector?.("[data-chip]") as HTMLElement | null;
+    const el = labelEl(pins[`room-${room.num}`]);
+    const chip = el?.querySelector?.("[data-chip]") as HTMLElement | null;
     styleChip(chip ?? undefined, selectedId === `room-${room.num}`);
-    const head = o?.element?.querySelector?.(".border-b-2") as HTMLElement | null;
+    const head = el?.querySelector?.(".border-b-2") as HTMLElement | null;
     if (head) {
       head.style.background = map.chip_bg;
       head.style.color = map.chip_fg;
     }
   }
-  const ent = pins.entrance as CSS2DObject | undefined;
-  styleChip(ent?.element, selectedId === "entrance");
+  styleChip(labelEl(pins.entrance), selectedId === "entrance");
 }
 
 /** Interactive 3D model of the building (Draco GLB in /public). */
@@ -282,20 +283,20 @@ export default function BuildingModel({
           );
           const label = new CSS2DObject(
             roomLabelElement(room.num, inRoom, cfg.chip_bg, cfg.chip_fg),
-          ) as PinObj;
+          );
           label.userData = { pinId: `room-${room.num}`, kind: "room" };
           label.position.set(room.x, room.y, 340);
           model.add(label);
           pins[`room-${room.num}`] = label;
         }
 
-        const barIcon = new CSS2DObject(iconLabelElement(GLASS_SVG)) as PinObj;
+        const barIcon = new CSS2DObject(iconLabelElement(GLASS_SVG));
         barIcon.userData = { pinId: "bar", kind: "icon" };
         barIcon.position.set(cfg.bar.x, cfg.bar.y, 380);
         model.add(barIcon);
         pins["icon-bar"] = barIcon;
 
-        const wcIcon = new CSS2DObject(iconLabelElement(WC_SVG)) as PinObj;
+        const wcIcon = new CSS2DObject(iconLabelElement(WC_SVG));
         wcIcon.userData = { pinId: "wc", kind: "icon" };
         wcIcon.position.set(cfg.wc.x, cfg.wc.y, 380);
         model.add(wcIcon);
@@ -307,14 +308,14 @@ export default function BuildingModel({
         entEl.style.cssText =
           `left:0;top:0;font-weight:900;font-style:italic;font-size:15px;` +
           `color:${cfg.chip_fg};background:${cfg.chip_bg};border:2px solid #111;padding:0 8px;`;
-        const entrance = new CSS2DObject(entEl) as PinObj;
+        const entrance = new CSS2DObject(entEl);
         entrance.userData = { pinId: "entrance", kind: "entrance" };
         entrance.position.set(cfg.entrance.x, cfg.entrance.y, 30);
         model.add(entrance);
         pins.entrance = entrance;
 
         for (const t of cfg.trees) {
-          const tree = makeTree() as PinObj;
+          const tree = makeTree();
           tree.userData = { pinId: t.id, kind: "tree" };
           tree.rotation.x = Math.PI / 2;
           tree.position.set(t.x, t.y, 0);
@@ -322,7 +323,7 @@ export default function BuildingModel({
           pins[t.id] = tree;
         }
         {
-          const bar = makeBar() as PinObj;
+          const bar = makeBar();
           bar.userData = { pinId: "bar", kind: "bar" };
           bar.rotation.x = Math.PI / 2;
           bar.position.set(cfg.bar.x, cfg.bar.y, 0);

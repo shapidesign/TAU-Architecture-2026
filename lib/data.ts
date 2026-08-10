@@ -36,6 +36,12 @@ export const DEFAULT_SETTINGS: Settings = {
   t_ar_lh: "1.4",
   t_ar_style: "outline",
 
+  // Exhibition about blurb (אדריכלות במעבר page)
+  about_he:
+    "תערוכת הבוגרים תשפ״ו–2026 של בית הספר לאדריכלות ע״ש דוד עזריאלי. התערוכה מסמנת את סיומה של תקופה ותחילתו של פרק חדש, ובוחנת את מושג המעבר בכמה רבדים: המעבר הפיזי בין המבנה הישן שבו למדנו אל המשכן החדש, המעבר המקצועי מהאקדמיה אל עולם המעשה, והמעבר האישי שכל סטודנטית וסטודנט עוברים בדרך לגיבוש זהות מקצועית ועצמאית. דרך עבודות הגמר והמיצגים, התערוכה מבקשת להאיר את הרגע שבין סיום להתחלה, בין מקום מוכר לעתיד שעדיין נבנה.",
+  about_en: "",
+  about_ar: "",
+
   // JSON blobs edited in admin — ponytail: stored in settings key/value
   // instead of dedicated tables; fine for a single exhibition's worth of data
   schedule_json: "[]", // Studio[]

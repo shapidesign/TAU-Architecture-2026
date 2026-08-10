@@ -53,6 +53,12 @@ const INVITE_FIELDS: [string, string][] = [
   ["location_he", "מיקום"],
 ];
 
+const ABOUT_FIELDS: [string, string, "rtl" | "ltr"][] = [
+  ["about_he", "טקסט אודות — עברית", "rtl"],
+  ["about_en", "טקסט אודות — English", "ltr"],
+  ["about_ar", "טקסט אודות — عربي", "rtl"],
+];
+
 function Save({ label = "שמירה" }: { label?: string }) {
   const { pending } = useFormStatus();
   return (
@@ -633,6 +639,20 @@ export default function AdminDashboard({
                   name={key}
                   defaultValue={settings[key]}
                   dir={key.endsWith("_en") || key === "title_en_prefix" ? "ltr" : "rtl"}
+                  className={input}
+                />
+              </label>
+            ))}
+
+            <h2 className="text-lg font-black mt-4">אודות — אדריכלות במעבר</h2>
+            {ABOUT_FIELDS.map(([key, name, dir]) => (
+              <label key={key} className={label}>
+                {name}
+                <textarea
+                  name={key}
+                  defaultValue={settings[key]}
+                  dir={dir}
+                  rows={6}
                   className={input}
                 />
               </label>

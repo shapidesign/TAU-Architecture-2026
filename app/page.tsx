@@ -75,6 +75,12 @@ export default async function Home({
           >
             דרכי הגעה וחניה · <span lang="ar">الوصول</span> · Getting Here
           </Link>
+          <Link
+            href="/about"
+            className="block bg-[var(--box)] text-center py-7 px-4 text-xl font-black border-2 border-[var(--ink)] shadow-[6px_6px_0_var(--ink)] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0_var(--ink)] transition-transform"
+          >
+            אדריכלות במעבר · <span lang="ar">عمارة قيد الانتقال</span> · Architecture in Transition
+          </Link>
         </nav>
       </HomeStage>
     </main>

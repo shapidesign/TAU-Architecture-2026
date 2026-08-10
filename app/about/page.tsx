@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/data";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "אדריכלות במעבר · Architecture in Transition",
+  title: "אודות · About",
 };
 
 export default async function AboutPage() {
@@ -16,21 +16,23 @@ export default async function AboutPage() {
         → חזרה · Back
       </Link>
       <h1 className="text-3xl font-black my-6 text-center">
-        אדריכלות במעבר · <span lang="ar">عمارة قيد الانتقال</span> · Architecture
-        in Transition
+        אודות · <span lang="ar">حول</span> · About
       </h1>
 
-      <div className="flex flex-col gap-6 text-base leading-relaxed">
+      {/* ponytail: centered column; justify + rtl = right-flush edges */}
+      <div className="mx-auto max-w-prose flex flex-col gap-6 text-base leading-relaxed">
         {s.about_he && (
-          <p className="whitespace-pre-line">{s.about_he}</p>
+          <p className="whitespace-pre-line text-justify" dir="rtl">
+            {s.about_he}
+          </p>
         )}
         {s.about_ar && (
-          <p lang="ar" className="whitespace-pre-line" dir="rtl">
+          <p lang="ar" className="whitespace-pre-line text-justify" dir="rtl">
             {s.about_ar}
           </p>
         )}
         {s.about_en && (
-          <p lang="en" className="whitespace-pre-line" dir="ltr">
+          <p lang="en" className="whitespace-pre-line text-justify" dir="ltr">
             {s.about_en}
           </p>
         )}

@@ -86,6 +86,9 @@ function makeBar(): THREE.Group {
   return bar;
 }
 
+// ponytail: one open room card at a time (mobile tap; desktop still uses hover)
+let closeActiveRoom: (() => void) | null = null;
+
 function roomLabelElement(
   num: string,
   studios: Studio[],
@@ -101,14 +104,17 @@ function roomLabelElement(
   chip.dataset.chip = "1";
   chip.style.cssText =
     `font-weight:900;font-size:13px;color:${chipFg};background:${chipBg};` +
-    "border:2px solid #111;padding:0 5px;line-height:1.5;text-align:center;";
+    "border:2px solid #111;padding:0 5px;line-height:1.5;text-align:center;cursor:pointer;";
   el.appendChild(chip);
 
   if (studios.length === 0) return el;
 
   const card = document.createElement("div");
+  // desktop: CSS hover. mobile: tap only (avoids iOS sticky :hover)
+  const fineHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   card.className =
-    "hidden group-hover:block absolute top-full right-1/2 translate-x-1/2 " +
+    (fineHover ? "hidden group-hover:block " : "hidden ") +
+    "absolute top-full right-1/2 translate-x-1/2 " +
     "w-52 border-2 border-[var(--ink)] bg-white shadow-[3px_3px_0_var(--ink)] text-right";
   for (const st of studios) {
     const head = document.createElement("div");
@@ -133,6 +139,33 @@ function roomLabelElement(
     }
   }
   el.appendChild(card);
+
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const close = () => {
+    card.style.removeProperty("display");
+    card.classList.add("hidden");
+    el.style.zIndex = "";
+    if (timer) clearTimeout(timer);
+    timer = null;
+    if (closeActiveRoom === close) closeActiveRoom = null;
+  };
+  const open = () => {
+    closeActiveRoom?.();
+    card.classList.remove("hidden");
+    card.style.display = "block";
+    el.style.zIndex = "10000";
+    timer = setTimeout(close, 10000);
+    closeActiveRoom = close;
+  };
+
+  // tap: show table 10s / second tap closes
+  chip.addEventListener("click", (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (card.style.display === "block") close();
+    else open();
+  });
+
   return el;
 }
 

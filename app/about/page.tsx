@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/data";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "אודות · About",
+  title: "אדריכלות במעבר · Architecture in Transition",
 };
 
 export default async function AboutPage() {
@@ -16,7 +16,8 @@ export default async function AboutPage() {
         → חזרה · Back
       </Link>
       <h1 className="text-3xl font-black my-6 text-center">
-        אודות · <span lang="ar">حول</span> · About
+        אדריכלות במעבר · <span lang="ar">عمارة قيد الانتقال</span> · Architecture
+        in Transition
       </h1>
 
       {/* ponytail: centered column; justify + rtl = right-flush edges */}

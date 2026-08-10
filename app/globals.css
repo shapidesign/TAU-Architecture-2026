@@ -371,6 +371,9 @@ body:has(.poster-45) {
 .cube.tumble {
   animation: tumble var(--dur, 6s) ease-in-out infinite alternate;
   animation-delay: var(--delay, 0s);
+  /* ponytail: keep compositor layer alive on iOS Safari */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* letter cube reveal: front face is a lid that swings open */
@@ -393,6 +396,10 @@ body:has(.poster-45) {
 }
 
 /* letter cubes stay hidden behind the intro, then pop in one by one */
+.cube-pop {
+  /* preserve-3d so the pop scale doesn't flatten the tumbling child on iOS */
+  transform-style: preserve-3d;
+}
 .poster-stage .cube-pop {
   opacity: 0;
 }
@@ -412,8 +419,9 @@ body:has(.poster-45) {
   }
 }
 
+/* keep the ambient tumble — it's gentle rock, not a spin; killing it made
+   iPhones with Reduce Motion look completely static */
 @media (prefers-reduced-motion: reduce) {
-  .cube.tumble { animation: none; }
   .lidcube .f-lid { transition: none; }
   .poster-stage .cube-pop { opacity: 1; }
   .poster-stage.go .cube-pop { animation: none; }

@@ -120,32 +120,34 @@ function Arrow3D({ seed, size }: { seed: number; size: string }) {
   return (
     <div
       aria-hidden="true"
-      className="scene3d cube-pop"
+      className="cube-pop"
       style={{ "--pop-delay": `${(seed % 10) * 0.09}s` } as React.CSSProperties}
     >
-      <div className="cube arrow3d tumble" style={style}>
-        {Array.from({ length: ARROW_LAYERS }, (_, i) => (
-          <svg
-            key={i}
-            viewBox="0 0 100 100"
-            className={`arrow-layer ${
-              i === ARROW_LAYERS - 1 ? "arrow-front" : i === 0 ? "arrow-back" : ""
-            }`}
-            style={{
-              transform: `translateZ(calc(var(--s) * ${(
-                (i / (ARROW_LAYERS - 1) - 0.5) *
-                ARROW_DEPTH
-              ).toFixed(3)}))`,
-            }}
-          >
-            <g transform={ARROW_FIT}>
-              {i === ARROW_LAYERS - 1 && (
-                <path d={ARROW_PATH} className="arrow-edge" />
-              )}
-              <path d={ARROW_PATH} />
-            </g>
-          </svg>
-        ))}
+      <div className="scene3d">
+        <div className="cube arrow3d tumble" style={style}>
+          {Array.from({ length: ARROW_LAYERS }, (_, i) => (
+            <svg
+              key={i}
+              viewBox="0 0 100 100"
+              className={`arrow-layer ${
+                i === ARROW_LAYERS - 1 ? "arrow-front" : i === 0 ? "arrow-back" : ""
+              }`}
+              style={{
+                transform: `translateZ(calc(var(--s) * ${(
+                  (i / (ARROW_LAYERS - 1) - 0.5) *
+                  ARROW_DEPTH
+                ).toFixed(3)}))`,
+              }}
+            >
+              <g transform={ARROW_FIT}>
+                {i === ARROW_LAYERS - 1 && (
+                  <path d={ARROW_PATH} className="arrow-edge" />
+                )}
+                <path d={ARROW_PATH} />
+              </g>
+            </svg>
+          ))}
+        </div>
       </div>
     </div>
   );

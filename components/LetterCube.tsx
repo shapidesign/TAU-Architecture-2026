@@ -76,61 +76,65 @@ export default function LetterCube({
 
   return (
     <div
-      className={`scene3d cube-pop ${className}`}
+      className={`cube-pop ${className}`}
       style={{ "--pop-delay": `${(seed % 10) * 0.09}s` } as React.CSSProperties}
     >
-      <button
-        ref={btnRef}
-        type="button"
-        aria-label={
-          pick ? `לפרויקט של ${pick.name_he}` : "פתחו את הקופסה לגלות פרויקט"
-        }
-        onClick={() => {
-          if (pick) {
-            clearTimeout(timer.current ?? undefined);
-            router.push(pick.id ? `/graduates/${pick.id}` : "/schedule");
-            return;
+      {/* scene3d separate from cube-pop: iOS flattens 3D when perspective
+          shares a node with a transform animation */}
+      <div className="scene3d">
+        <button
+          ref={btnRef}
+          type="button"
+          aria-label={
+            pick ? `לפרויקט של ${pick.name_he}` : "פתחו את הקופסה לגלות פרויקט"
           }
-          if (pool.length === 0) return;
-          freezeCube();
-          setPick(pool[Math.floor(Math.random() * pool.length)]);
-          // closes by itself, next open reveals a new random graduate
-          timer.current = setTimeout(close, 5000);
-        }}
-        className="block cursor-pointer bg-transparent border-0 p-0"
-        style={{ width: size, height: size }}
-      >
-        <Cube
-          content={glyph}
-          className={`tumble lidcube ${pick ? "revealed" : ""}`}
-          style={style}
-          inner={
-            pick?.cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={pick.cover}
-                alt={`עבודה של ${pick.name_he}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : pick ? (
-              <span
-                dir="rtl"
-                className="flex flex-col items-center justify-center gap-0.5 w-full h-full p-1 text-center"
-              >
-                <span className="text-[calc(var(--s)*0.14)] font-bold">
-                  {pick.name_he}
-                </span>
-                {pick.sched && (
-                  <span className="text-[calc(var(--s)*0.1)] leading-tight">
-                    {pick.sched}
+          onClick={() => {
+            if (pick) {
+              clearTimeout(timer.current ?? undefined);
+              router.push(pick.id ? `/graduates/${pick.id}` : "/schedule");
+              return;
+            }
+            if (pool.length === 0) return;
+            freezeCube();
+            setPick(pool[Math.floor(Math.random() * pool.length)]);
+            // closes by itself, next open reveals a new random graduate
+            timer.current = setTimeout(close, 5000);
+          }}
+          className="block cursor-pointer bg-transparent border-0 p-0"
+          style={{ width: size, height: size }}
+        >
+          <Cube
+            content={glyph}
+            className={`tumble lidcube ${pick ? "revealed" : ""}`}
+            style={style}
+            inner={
+              pick?.cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={pick.cover}
+                  alt={`עבודה של ${pick.name_he}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : pick ? (
+                <span
+                  dir="rtl"
+                  className="flex flex-col items-center justify-center gap-0.5 w-full h-full p-1 text-center"
+                >
+                  <span className="text-[calc(var(--s)*0.14)] font-bold">
+                    {pick.name_he}
                   </span>
-                )}
-              </span>
-            ) : null
-          }
-        />
-      </button>
+                  {pick.sched && (
+                    <span className="text-[calc(var(--s)*0.1)] leading-tight">
+                      {pick.sched}
+                    </span>
+                  )}
+                </span>
+              ) : null
+            }
+          />
+        </button>
+      </div>
     </div>
   );
 }
